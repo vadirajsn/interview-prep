@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design - Reference</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f1419;
+            --surface: #161d24;
+            --surface2: #1b242d;
+            --line: #2a3641;
+            --line2: #3a4854;
+            --ink: #e6edf3;
+            --mut: #9fb0bf;
+            --faint: #71828f;
+            --a1: #7aa2f7;
+            --a2: #9ece6a;
+            --a3: #e0af68;
+            --a4: #bb9af7;
+            --a5: #7dcfff;
+            --warn: #f7768e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--ink);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background-color: var(--surface);
+            border-right: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .nav-pill {
+            font-size: 12px;
+            text-decoration: none;
+            color: var(--mut);
+            background: var(--surface2);
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            transition: all 0.2s ease;
+        }
+
+        .nav-pill:hover {
+            color: var(--ink);
+            border-color: var(--line2);
+            background: var(--line);
+        }
+
+        .sidebar h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--ink);
+        }
+
+        .sidebar p {
+            font-size: 13px;
+            color: var(--faint);
+        }
+
+        .topic-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 10px;
+        }
+
+        .topic-btn {
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--mut);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .topic-btn:hover {
+            background: var(--surface2);
+            color: var(--ink);
+        }
+
+        .topic-btn.active {
+            background: var(--surface2);
+            border-color: var(--line);
+            color: var(--ink);
+        }
+
+        .topic-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .topic-cat {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--bg);
+            color: var(--faint);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        /* Main Area */
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .main-header {
+            padding: 24px 40px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(15, 20, 25, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .main-title {
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cat-badge {
+            font-size: 12px;
+            font-family: 'IBM Plex Mono', monospace;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: var(--surface2);
+            border: 1px solid var(--line);
+            color: var(--a5);
+        }
+
+        .content {
+            padding: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Canvas Section */
+        .canvas-container {
+            background: #0b1016;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 24px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: var(--surface);
+            border-top: 1px solid var(--line);
+        }
+
+        .step-info {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+            color: var(--mut);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            background: var(--surface2);
+            border: 1px solid var(--line);
+            color: var(--ink);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--line);
+            border-color: var(--line2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .explanation {
+            font-size: 15px;
+            line-height: 1.5;
+            color: var(--ink);
+            padding: 16px 20px;
+            background: rgba(122, 162, 247, 0.1);
+            border-left: 3px solid var(--a1);
+            margin-bottom: 40px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .panel h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--a5);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel ul {
+            list-style: none;
+        }
+
+        .panel li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--mut);
+        }
+
+        .panel li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--a1);
+            font-weight: bold;
+        }
+
+        .numbers-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .number-pill {
+            background: var(--surface2);
+            border: 1px solid var(--line);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+            color: var(--a3);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .number-pill span {
+            font-family: 'Outfit', sans-serif;
+            font-size: 11px;
+            color: var(--faint);
+            margin-top: 2px;
+        }
+
+        /* Tradeoffs */
+        .tradeoffs {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .tradeoff {
+            flex: 1;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            font-size: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .tradeoff.gain {
+            background: rgba(158, 206, 106, 0.05);
+            border-color: rgba(158, 206, 106, 0.2);
+        }
+
+        .tradeoff.cost {
+            background: rgba(247, 118, 142, 0.05);
+            border-color: rgba(247, 118, 142, 0.2);
+        }
+        
+        .icon-gain { color: var(--a2); font-weight: bold; }
+        .icon-cost { color: var(--warn); font-weight: bold; }
+
+        /* Questions */
+        .questions {
+            margin-bottom: 60px;
+        }
+
+        .q-item {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: var(--mut);
+        }
+
+        .q-item strong {
+            color: var(--ink);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--faint); }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="nav-links">
+                <a href="index.html" class="nav-pill">← Home</a>
+                <a href="dsa-animator.html" class="nav-pill">DSA Animator →</a>
+            </div>
+            <h1>System Design</h1>
+            <p>Senior SWE Interview Reference</p>
+        </div>
+        <div class="topic-list" id="topicList">
+            <!-- Topics rendered here -->
+        </div>
+    </div>
+
+    <div class="main-area">
+        <div class="main-header">
+            <div class="main-title">
+                <span id="titleText">Topic Name</span>
+                <span class="cat-badge" id="catBadge">Category</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="canvas-container">
+                <canvas id="canvas" width="900" height="340"></canvas>
+                <div class="controls">
+                    <div class="step-info" id="stepInfo">Step 1 of 5</div>
+                    <div class="btn-group">
+                        <button class="btn" id="btnPrev">← Prev</button>
+                        <button class="btn" id="btnNext">Next →</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="explanation" id="explanation">
+                Explanation text goes here.
+            </div>
+
+            <div class="tradeoffs" id="tradeoffs">
+                <div class="tradeoff gain">
+                    <span class="icon-gain">✓</span>
+                    <div>
+                        <strong style="color:var(--ink)">Gain</strong><br>
+                        <span id="tradeGain" style="color:var(--mut)">...</span>
+                    </div>
+                </div>
+                <div class="tradeoff cost">
+                    <span class="icon-cost">✗</span>
+                    <div>
+                        <strong style="color:var(--ink)">Cost</strong><br>
+                        <span id="tradeCost" style="color:var(--mut)">...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="panel">
+                    <h3>Key Concepts</h3>
+                    <ul id="conceptsList">
+                    </ul>
+                </div>
+                <div class="panel">
+                    <h3>Key Numbers</h3>
+                    <div class="numbers-list" id="numbersList">
+                    </div>
+                </div>
+            </div>
+
+            <div class="questions" id="questions">
+                <h3 style="margin-bottom:16px;font-size:18px;">Common Interview Questions</h3>
+                <div id="qList"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+const BG='#0b1016', SURF='#161d24', SURF2='#1b242d';
+const BLUE='#7aa2f7', GREEN='#9ece6a', AMBER='#e0af68', PURPLE='#bb9af7', CYAN='#7dcfff', RED='#f7768e', DIM='#71828f', INK='#e6edf3', LINE='#3a4854';
+
+function rbox(ctx,x,y,w,h,fill,stroke,r=10){
+    ctx.beginPath(); ctx.roundRect(x,y,w,h,r);
+    ctx.fillStyle=fill; ctx.fill();
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();}
+}
+function lbl(ctx,s,x,y,size=13,color=INK,align='center',bold=false){
+    ctx.fillStyle=color;
+    ctx.font=(bold?'600 ':'400 ')+size+'px "Outfit",-apple-system,sans-serif';
+    ctx.textAlign=align; ctx.textBaseline='middle';
+    ctx.fillText(s,x,y);
+}
+function arrow(ctx,x1,y1,x2,y2,color=DIM,label=''){
+    ctx.save();
+    ctx.strokeStyle=color; ctx.lineWidth=1.8;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    const ang=Math.atan2(y2-y1,x2-x1);
+    ctx.fillStyle=color;
+    ctx.translate(x2,y2); ctx.rotate(ang);
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-9,-4); ctx.lineTo(-9,4); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    if(label){
+        const mx=(x1+x2)/2, my=(y1+y2)/2 - 12;
+        ctx.fillStyle=color;
+        ctx.font='11px "IBM Plex Mono",monospace';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(label,mx,my);
+    }
+}
+function box(ctx,x,y,w,h,label,fill,stroke,sublabel=''){
+    rbox(ctx,x,y,w,h,fill,stroke);
+    lbl(ctx,label,x+w/2,y+(sublabel?h/2-8:h/2),13,INK,'center',true);
+    if(sublabel) {
+        ctx.fillStyle=DIM;
+        ctx.font='11px "IBM Plex Mono",monospace';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(sublabel,x+w/2,y+h/2+9);
+    }
+}
+function dbCyl(ctx,x,y,w,h,label,fill,stroke){
+    ctx.fillStyle=fill;
+    ctx.beginPath(); ctx.ellipse(x+w/2,y+10,w/2,10,0,0,Math.PI*2); ctx.fill();
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();}
+    ctx.fillRect(x,y+10,w,h-20);
+    if(stroke){
+        ctx.beginPath(); ctx.moveTo(x,y+10); ctx.lineTo(x,y+h-10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x+w,y+10); ctx.lineTo(x+w,y+h-10); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.ellipse(x+w/2,y+h-10,w/2,10,0,0,Math.PI); ctx.fill();
+    if(stroke){ctx.stroke();}
+    lbl(ctx,label,x+w/2,y+h/2,13,INK,'center',true);
+}
+
+const TOPICS = [
+    {
+        id: 'url', name: 'URL Shortener', cat: 'Classic',
+        concepts: ['Base62 Encoding (A-Z, a-z, 0-9)', 'Hash collision handling', 'Custom aliases support', '301 (Permanent) vs 302 (Temporary) redirects', 'Analytics tracking & Rate Limiting'],
+        questions: ['How to handle 100M URLs/day?', 'How to ensure uniqueness across distributed servers?', 'How to support custom aliases?'],
+        numbers: [{v:'100M',l:'URLs/day'}, {v:'10:1',l:'Read:Write'}, {v:'100GB',l:'Storage/yr'}],
+        tradeoffs: { gain: 'Scalable reads and fast redirects with Redis.', cost: 'Storage growth over time; DB bottleneck on massive hash collisions.' },
+        build: () => {
+            return [
+                { step:1, msg:"1. Client submits a long URL to shorten.", show:['client','api','arr1'] },
+                { step:2, msg:"2. API Server asks ID Generator for a unique sequence.", show:['client','api','arr1','idgen','arr2'] },
+                { step:3, msg:"3. Store mapping (short, long) in Database.", show:['client','api','arr1','idgen','arr2','db','arr3'] },
+                { step:4, msg:"4. Cache the mapping in Redis for fast reads.", show:['client','api','arr1','idgen','arr2','db','arr3','cache','arr4'] },
+                { step:5, msg:"5. On redirect, fetch from Cache and return 301/302.", show:['client','api','arr1','idgen','arr2','db','arr3','cache','arr4','arr5'] }
+            ];
+        },
+        render: (ctx, fr, s) => {
+            const sh = (id) => fr.show.includes(id);
+            if(sh('client')) box(ctx, 50, 140, 100, 60, 'Client', SURF2, LINE);
+            if(sh('api')) box(ctx, 250, 140, 120, 60, 'API Server', SURF2, BLUE);
+            if(sh('arr1')) arrow(ctx, 150, 170, 250, 170, DIM, 'POST /create');
+            if(sh('idgen')) box(ctx, 450, 60, 120, 50, 'ID Gen', SURF2, AMBER, 'Base62');
+            if(sh('arr2')) arrow(ctx, 310, 140, 450, 90, DIM, 'get ID');
+            if(sh('db')) dbCyl(ctx, 450, 220, 120, 70, 'Database', SURF2, GREEN);
+            if(sh('arr3')) arrow(ctx, 370, 180, 450, 240, DIM, 'insert');
+            if(sh('cache')) box(ctx, 500, 140, 120, 50, 'Redis', SURF2, RED, 'Cache');
+            if(sh('arr4')) arrow(ctx, 370, 170, 500, 170, DIM, 'set');
+            if(sh('arr5')) arrow(ctx, 250, 190, 150, 190, GREEN, '302 Redirect');
+        }
+    },
+    {
+        id: 'ratelimit', name: 'Rate Limiter', cat: 'Infrastructure',
+        concepts: ['Algorithms: Token Bucket, Sliding Window Log, Fixed Window', 'Distributed Rate Limiting via Redis INCR + EXPIRE', 'Header conventions (X-RateLimit-Remaining)', 'Where to place: Client vs Gateway vs Server'],
+        questions: ['How to rate limit distributed across 3 servers?', 'Token bucket vs sliding window tradeoffs?', 'How to handle bursty traffic?'],
+        numbers: [{v:'100K',l:'Ops/sec Redis'}, {v:'10M',l:'Users capacity'}, {v:'<1ms',l:'Overhead'}],
+        tradeoffs: { gain: 'Protects backend from DDoS and abusive scraping.', cost: 'Adds latency to every request; Redis becomes a critical dependency.' },
+        build: () => {
+            return [
+                { step:1, msg:"1. Client request arrives at API Gateway.", show:['client','gw','arr1'] },
+                { step:2, msg:"2. Gateway checks Rate Limiter middleware.", show:['client','gw','arr1','rl'] },
+                { step:3, msg:"3. Rate Limiter queries Redis for current token count.", show:['client','gw','arr1','rl','redis','arr2'] },
+                { step:4, msg:"4. If allowed, request forwarded to Backend.", show:['client','gw','arr1','rl','redis','arr2','back','arr3'] },
+                { step:5, msg:"5. If blocked, returns 429 Too Many Requests.", show:['client','gw','arr1','rl','redis','arr2','back','arr3','arr4'] }
+            ];
+        },
+        render: (ctx, fr) => {
+            const sh = (id) => fr.show.includes(id);
+            if(sh('client')) box(ctx, 50, 140, 100, 60, 'Client', SURF2, LINE);
+            if(sh('gw')) box(ctx, 250, 100, 140, 140, 'API Gateway', SURF, LINE);
+            if(sh('arr1')) arrow(ctx, 150, 170, 250, 170, DIM, 'Request');
+            if(sh('rl')) box(ctx, 270, 150, 100, 40, 'Rate Limiter', SURF2, BLUE);
+            if(sh('redis')) dbCyl(ctx, 260, 280, 120, 50, 'Redis', SURF2, RED);
+            if(sh('arr2')) arrow(ctx, 320, 190, 320, 280, DIM, 'Check & INCR');
+            if(sh('back')) box(ctx, 550, 140, 120, 60, 'Backend', SURF2, GREEN);
+            if(sh('arr3')) arrow(ctx, 390, 170, 550, 170, GREEN, 'Allow');
+            if(sh('arr4')) arrow(ctx, 250, 190, 150, 190, RED, '429 Block');
+        }
+    },
+    {
+        id: 'consistent', name: 'Consistent Hashing', cat: 'Distributed',
+        concepts: ['Hash Ring mapping keys and nodes', 'Virtual Nodes (150-200 per physical server)', 'Minimizes key redistribution on scaling', 'Prevents hot spots in distributed caches'],
+        questions: ['What happens when a node fails?', 'Why use virtual nodes?', 'How does modulo hashing fail at scale?'],
+        numbers: [{v:'1/N',l:'Keys moved'}, {v:'~200',l:'VNodes/Server'}, {v:'O(log N)',l:'Lookup'}],
+        tradeoffs: { gain: 'Smooth scaling without massive cache invalidation.', cost: 'Slightly more complex routing logic and metadata management.' },
+        build: () => {
+            return [
+                { step:1, msg:"1. A hash space represented as a ring (0 to 2^32-1).", show:['ring'] },
+                { step:2, msg:"2. Physical Nodes A, B, C placed on ring via hash(IP).", show:['ring','nodes'] },
+                { step:3, msg:"3. Keys mapped to nearest node clockwise.", show:['ring','nodes','keys'] },
+                { step:4, msg:"4. Adding Node D only remaps keys from C to D.", show:['ring','nodes','keys','nodeD'] },
+                { step:5, msg:"5. Virtual nodes distribute load evenly.", show:['ring','nodes','keys','nodeD','vnodes'] }
+            ];
+        },
+        render: (ctx, fr) => {
+            const sh = (id) => fr.show.includes(id);
+            const cx=450, cy=170, r=120;
+            if(sh('ring')){
+                ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+                ctx.strokeStyle=LINE; ctx.lineWidth=3; ctx.stroke();
+            }
+            const drawNode = (ang, label, color) => {
+                const x = cx + r*Math.cos(ang), y = cy + r*Math.sin(ang);
+                ctx.beginPath(); ctx.arc(x,y,12,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+                lbl(ctx,label,x + (Math.cos(ang)*20), y + (Math.sin(ang)*20), 14, color, 'center', true);
+            };
+            const drawKey = (ang, label) => {
+                const x = cx + r*Math.cos(ang), y = cy + r*Math.sin(ang);
+                ctx.beginPath(); ctx.rect(x-5,y-5,10,10); ctx.fillStyle=AMBER; ctx.fill();
+                lbl(ctx,label,x - (Math.cos(ang)*20), y - (Math.sin(ang)*20), 11, AMBER);
+            };
+            if(sh('nodes')){ drawNode(0, 'A', BLUE); drawNode(Math.PI*2/3, 'B', BLUE); drawNode(Math.PI*4/3, 'C', BLUE); }
+            if(sh('keys')){ drawKey(0.5, 'k1'); drawKey(2.5, 'k2'); drawKey(4.5, 'k3'); }
+            if(sh('nodeD')){
+                drawNode(Math.PI*5/3, 'D', GREEN);
+                arrow(ctx, cx + (r-30)*Math.cos(5), cy + (r-30)*Math.sin(5), cx + r*Math.cos(Math.PI*5/3)-10, cy + r*Math.sin(Math.PI*5/3)-10, GREEN);
+            }
+            if(sh('vnodes')){
+                for(let i=0; i<12; i++){
+                    const ang = i*Math.PI/6 + 0.1;
+                    const x = cx + r*Math.cos(ang), y = cy + r*Math.sin(ang);
+                    ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fillStyle=DIM; ctx.fill();
+                }
+            }
+        }
+    },
+    {
+        id: 'loadbalancer', name: 'Load Balancer', cat: 'Infrastructure',
+        concepts: ['L4 (Transport) vs L7 (Application) routing', 'Algorithms: Round Robin, Least Conn, IP Hash', 'Active Health Checks', 'Sticky Sessions / Session Affinity', 'Active-Passive HA setup'],
+        questions: ['How to maintain sessions across multiple servers?', 'L4 vs L7 tradeoffs?', 'How do you avoid the LB becoming a single point of failure?'],
+        numbers: [{v:'1M+',l:'Req/sec'}, {v:'5-30s',l:'Health Checks'}, {v:'Layer 4/7',l:'Routing'}],
+        tradeoffs: { gain: 'High availability and horizontal scalability.', cost: 'LB itself is a potential bottleneck/SPOF if not clustered.' },
+        build: () => {
+            return [
+                { step:1, msg:"1. Clients send requests to a single IP.", show:['clients','arr1'] },
+                { step:2, msg:"2. Load Balancer receives traffic.", show:['clients','arr1','lb'] },
+                { step:3, msg:"3. LB periodically health-checks backends.", show:['clients','arr1','lb','servers','hc'] },
+                { step:4, msg:"4. LB routes to Server 1 via algorithm (e.g. Least Conn).", show:['clients','arr1','lb','servers','hc','route1'] },
+                { step:5, msg:"5. Next request goes to Server 2.", show:['clients','arr1','lb','servers','hc','route1','route2'] }
+            ];
+        },
+        render: (ctx, fr) => {
+            const sh = (id) => fr.show.includes(id);
+            if(sh('clients')){
+                box(ctx, 40, 100, 80, 40, 'Client 1', SURF2, LINE);
+                box(ctx, 40, 200, 80, 40, 'Client 2', SURF2, LINE);
+            }
+            if(sh('arr1')){
+                arrow(ctx, 120, 120, 250, 150, DIM);
+                arrow(ctx, 120, 220, 250, 190, DIM);
+            }
+            if(sh('lb')) box(ctx, 250, 130, 120, 80, 'Load Balancer', SURF2, BLUE, 'L7 Nginx');
+            
+            if(sh('servers')){
+                box(ctx, 500, 70, 100, 50, 'Server 1', SURF2, GREEN);
+                box(ctx, 500, 145, 100, 50, 'Server 2', SURF2, GREEN);
+                box(ctx, 500, 220, 100, 50, 'Server 3', SURF2, RED, 'Down');
+            }
+            if(sh('hc')){
+                arrow(ctx, 370, 170, 500, 95, DIM, 'check');
+                arrow(ctx, 370, 170, 500, 170, DIM, 'check');
+                arrow(ctx, 370, 170, 500, 245, RED, 'fail');
+            }
+            if(sh('route1')) arrow(ctx, 370, 150, 500, 95, GREEN, 'Req 1');
+            if(sh('route2')) arrow(ctx, 370, 190, 500, 170, BLUE, 'Req 2');
+        }
+    },
+    {
+        id: 'cache', name: 'Cache (Redis)', cat: 'Performance',
+        concepts: ['Patterns: Cache-Aside, Write-Through, Write-Behind', 'Eviction: LRU, LFU, TTL', 'Thundering Herd & Cache Stampede prevention', 'Hot Key problems'],
+        questions: ['How do you handle cache invalidation?', 'What is a cache stampede and how do you prevent it?', 'Redis vs Memcached?'],
+        numbers: [{v:'<1ms',l:'Latency'}, {v:'1M+',l:'Ops/sec'}, {v:'O(1)',l:'Access'}],
+        tradeoffs: { gain: 'Massively reduces DB load and latency.', cost: 'Data staleness, complex invalidation logic.' },
+        build: () => {
+            return [
+                { step:1, msg:"1. App receives read request.", show:['app'] },
+                { step:2, msg:"2. App checks Redis (Cache-Aside).", show:['app','redis','arr1'] },
+                { step:3, msg:"3. Cache Miss! (Data not found/expired).", show:['app','redis','arr1','miss'] },
+                { step:4, msg:"4. App fetches from DB.", show:['app','redis','arr1','miss','db','arr2'] },
+                { step:5, msg:"5. App writes result back to Cache for next time.", show:['app','redis','arr1','miss','db','arr2','arr3'] }
+            ];
+        },
+        render: (ctx, fr) => {
+            const sh = (id) => fr.show.includes(id);
+            if(sh('app')) box(ctx, 100, 140, 120, 60, 'App Server', SURF2, LINE);
+            if(sh('redis')) box(ctx, 350, 60, 120, 60, 'Redis', SURF2, RED, 'Cache');
+            if(sh('arr1')) arrow(ctx, 160, 140, 350, 90, DIM, '1. Get(key)');
+            if(sh('miss')) lbl(ctx, 'Miss', 250, 80, 12, RED, 'center', true);
+            if(sh('db')) dbCyl(ctx, 350, 220, 120, 70, 'Database', SURF2, GREEN);
+            if(sh('arr2')) arrow(ctx, 180, 200, 350, 250, DIM, '2. Fetch from DB');
+            if(sh('arr3')) arrow(ctx, 220, 140, 350, 100, GREEN, '3. Set(key, val)');
+        }
+    },
+    {
+        id: 'kafka', name: 'Message Queue (Kafka)', cat: 'Async',
+        concepts: ['Producers, Consumers, Topics, Partitions', 'Consumer Groups (scaling reads)', 'Offsets and Retention', 'At-least-once vs Exactly-once semantics'],
+        questions: ['How do you guarantee message ordering?', 'What is a consumer group?', 'Kafka vs RabbitMQ?'],
+        numbers: [{v:'1M+',l:'Msgs/sec'}, {v:'7 days',l:'Retention (avg)'}, {v:'O(1)',l:'Disk Read'}],
+        tradeoffs: { gain: 'Decoupling, async processing, buffering bursts.', cost: 'Complex cluster management (ZooKeeper/KRaft), eventual consistency.' },
+        build: () => {
+            return [
+                { step:1, msg:"1. Producers publish messages to a Topic.", show:['prod','topic','arr1'] },
+                { step:2, msg:"2. Topic is split into Partitions for scale.", show:['prod','topic','arr1','parts'] },
+                { step:3, msg:"3. Consumer Group reads from partitions.", show:['prod','topic','arr1','parts','cg1','arr2'] },
+                { step:4, msg:"4. Offsets track what has been read.", show:['prod','topic','arr1','parts','cg1','arr2','offsets'] },
+                { step:5, msg:"5. Multiple groups can read the same topic independently.", show:['prod','topic','arr1','parts','cg1','arr2','offsets','cg2','arr3'] }
+            ];
+        },
+        render: (ctx, fr) => {
+            const sh = (id) => fr.show.includes(id);
+            if(sh('prod')) {
+                box(ctx, 50, 100, 90, 40, 'Producer 1', SURF2, LINE);
+                box(ctx, 50, 160, 90, 40, 'Producer 2', SURF2, LINE);
+            }
+            if(sh('topic')) box(ctx, 250, 80, 200, 140, 'Topic (Events)', SURF, LINE);
+            if(sh('parts')) {
+                box(ctx, 270, 110, 160, 30, 'P0', SURF2, DIM);
+                box(ctx, 270, 150, 160, 30, 'P1', SURF2, DIM);
+                box(ctx, 270, 190, 160, 30, 'P2', SURF2, DIM);
+            }
+            if(sh('arr1')){ arrow(ctx, 140, 120, 250, 120, DIM); arrow(ctx, 140, 180, 250, 160, DIM); }
+            
+            if(sh('cg1')) box(ctx, 600, 60, 120, 80, 'Group A', SURF2, BLUE, 'Analytics');
+            if(sh('arr2')) arrow(ctx, 450, 120, 600, 100, BLUE, 'poll()');
+            
+            if(sh('offsets')){
+                lbl(ctx, 'offset=42', 350, 125, 10, AMBER);
+                lbl(ctx, 'offset=12', 350, 165, 10, AMBER);
+            }
+            
+            if(sh('cg2')) box(ctx, 600, 180, 120, 80, 'Group B', SURF2, GREEN, 'Emails');
+            if(sh('arr3')) arrow(ctx, 450, 180, 600, 200, GREEN, 'poll()');
+        }
+    },
+    {
+        id: 'database', name: 'Database Design', cat: 'Storage',
+        concepts: ['Primary-Replica (Read Replicas)', 'Sharding (Horizontal Scaling)', 'ACID vs BASE, CAP Theorem', 'Indexes (B-Tree, Hash)'],
+        questions: ['When to use NoSQL vs SQL?', 'How do you shard a user table safely?', 'What is replication lag?'],
+        numbers: [{v:'10K',l:'Writes/sec'}, {v:'0.1ms',l:'SSD latency'}, {v:'3+',l:'Replicas'}],
+        tradeoffs: { gain: 'Scales storage and read throughput massively.', cost: 'Sharding joins are hard; replication lag can cause stale reads.' },
+        build: () => {
+            return [
+                { step:1, msg:"1. App writes to Primary DB.", show:['app','dbP','arr1'] },
+                { step:2, msg:"2. Primary async replicates to Replicas.", show:['app','dbP','arr1','dbR','arr2'] },
+                { step:3, msg:"3. App reads from Replicas (scales reads).", show:['app','dbP','arr1','dbR','arr2','arr3'] },
+                { step:4, msg:"4. Data grows too large: Sharding needed.", show:['app','dbP','arr1','dbR','arr2','arr3','shard'] },
+                { step:5, msg:"5. Routing layer maps UserID to specific Shard.", show:['app','dbP','arr1','dbR','arr2','arr3','shard','router'] }
+            ];
+        },
+        render: (ctx, fr) => {
+            const sh = (id) => fr.show.includes(id);
+            if(sh('app')) box(ctx, 50, 130, 100, 60, 'App', SURF2, LINE);
+            if(sh('dbP')) dbCyl(ctx, 300, 40, 100, 60, 'Primary', SURF2, BLUE);
+            if(sh('arr1')) arrow(ctx, 150, 150, 300, 70, DIM, 'Write');
+            if(sh('dbR')){
+                dbCyl(ctx, 500, 40, 80, 50, 'Replica 1', SURF2, GREEN);
+                dbCyl(ctx, 500, 110, 80, 50, 'Replica 2', SURF2, GREEN);
+            }
+            if(sh('arr2')){ arrow(ctx, 400, 70, 500, 60, DIM, 'sync'); arrow(ctx, 400, 70, 500, 130, DIM, 'sync'); }
+            if(sh('arr3')) arrow(ctx, 500, 140, 150, 160, GREEN, 'Read');
+            
+            if(sh('shard')){
+                dbCyl(ctx, 400, 220, 90, 60, 'Shard 1', SURF2, AMBER, 'A-M');
+                dbCyl(ctx, 520, 220, 90, 60, 'Shard 2', SURF2, AMBER, 'N-Z');
+            }
+            if(sh('router')){
+                box(ctx, 250, 230, 90, 40, 'Router', SURF2, PURPLE);
+                arrow(ctx, 150, 170, 250, 240, DIM);
+                arrow(ctx, 340, 250, 400, 250, DIM);
+                arrow(ctx, 340, 250, 520, 250, DIM);
+            }
+        }
+    },
+    {
+        id: 'cdn', name: 'CDN', cat: 'Performance',
+        concepts: ['Edge Nodes (PoPs)', 'Push vs Pull CDN', 'Cache-Control headers, TTL', 'Invalidation & Purging'],
+        questions: ['How does a CDN reduce latency?', 'How do you handle dynamic content with CDNs?', 'Push vs pull tradeoffs?'],
+        numbers: [{v:'20ms',l:'Edge Latency'}, {v:'70%',l:'Traffic Served'}, {v:'<100km',l:'To User'}],
+        tradeoffs: { gain: 'Dramatically lower latency for static assets globally.', cost: 'Cost, cache invalidation delays.' },
+        build: () => {
+            return [
+                { step:1, msg:"1. Users request assets globally (US, EU).", show:['users'] },
+                { step:2, msg:"2. DNS routes to nearest CDN Edge node.", show:['users','edges','arr1'] },
+                { step:3, msg:"3. Cache Miss: Edge fetches from Origin.", show:['users','edges','arr1','origin','arr2'] },
+                { step:4, msg:"4. Origin responds, Edge caches it.", show:['users','edges','arr1','origin','arr2','arr3'] },
+                { step:5, msg:"5. Next user gets instant Cache Hit.", show:['users','edges','arr1','origin','arr2','arr3','arr4'] }
+            ];
+        },
+        render: (ctx, fr) => {
+            const sh = (id) => fr.show.includes(id);
+            if(sh('users')){
+                box(ctx, 50, 60, 80, 40, 'User (US)', SURF2, LINE);
+                box(ctx, 50, 220, 80, 40, 'User (EU)', SURF2, LINE);
+            }
+            if(sh('edges')){
+                box(ctx, 250, 60, 100, 50, 'Edge (US)', SURF2, BLUE);
+                box(ctx, 250, 220, 100, 50, 'Edge (EU)', SURF2, BLUE);
+            }
+            if(sh('arr1')){
+                arrow(ctx, 130, 80, 250, 80, DIM);
+                arrow(ctx, 130, 240, 250, 240, DIM);
+            }
+            if(sh('origin')) box(ctx, 600, 140, 120, 70, 'Origin Server', SURF2, AMBER);
+            if(sh('arr2')){ arrow(ctx, 350, 80, 600, 160, DIM, 'Pull (Miss)'); }
+            if(sh('arr3')){ arrow(ctx, 600, 150, 350, 90, GREEN, 'Cache'); }
+            if(sh('arr4')){ arrow(ctx, 250, 230, 130, 230, GREEN, 'Hit (Fast)'); }
+        }
+    },
+    {
+        id: 'lock', name: 'Distributed Locking', cat: 'Distributed',
+        concepts: ['Redis SETNX + EXPIRE (Atomic)', 'Redlock Algorithm (Quorum)', 'Fencing tokens to prevent stale writes', 'Deadlock prevention via TTL'],
+        questions: ['What if the lock holder crashes?', 'What is the Redlock algorithm?', 'How to prevent a paused process from writing stale data?'],
+        numbers: [{v:'30-60s',l:'TTL Default'}, {v:'2N+1',l:'Redlock Nodes'}, {v:'<5ms',l:'Acquire time'}],
+        tradeoffs: { gain: 'Prevents race conditions in distributed systems.', cost: 'Locking adds latency; GC pauses can violate lock safety.' },
+        build: () => {
+            return [
+                { step:1, msg:"1. Service A wants exclusive access to a resource.", show:['svca','res'] },
+                { step:2, msg:"2. A calls Redis SETNX lock_key with TTL.", show:['svca','res','redis','arr1'] },
+                { step:3, msg:"3. Lock acquired! A accesses resource.", show:['svca','res','redis','arr1','arr2'] },
+                { step:4, msg:"4. Service B tries to acquire lock and fails (waiting).", show:['svca','res','redis','arr1','arr2','svcb','arr3'] },
+                { step:5, msg:"5. A finishes and DEL the lock. B can now acquire.", show:['svca','res','redis','arr1','arr2','svcb','arr3','arr4'] }
+            ];
+        },
+        render: (ctx, fr) => {
+            const sh = (id) => fr.show.includes(id);
+            if(sh('svca')) box(ctx, 50, 60, 100, 50, 'Service A', SURF2, LINE);
+            if(sh('res')) box(ctx, 550, 130, 120, 60, 'DB / Resource', SURF2, AMBER);
+            if(sh('redis')) box(ctx, 300, 130, 100, 60, 'Redis', SURF2, RED, 'Lock Manager');
+            if(sh('arr1')) arrow(ctx, 150, 80, 300, 140, GREEN, 'SETNX OK');
+            if(sh('arr2')) arrow(ctx, 150, 70, 550, 150, GREEN, 'Write');
+            if(sh('svcb')) box(ctx, 50, 220, 100, 50, 'Service B', SURF2, LINE);
+            if(sh('arr3')) arrow(ctx, 150, 240, 300, 170, RED, 'SETNX Fail');
+            if(sh('arr4')) arrow(ctx, 300, 130, 150, 90, DIM, 'DEL (Release)');
+        }
+    },
+    {
+        id: 'search', name: 'Search System', cat: 'Search',
+        concepts: ['Inverted Index mapping terms to document IDs', 'Tokenization, Stemming, Stop words', 'TF-IDF & BM25 Relevance Scoring', 'Sharding the index for massive scale'],
+        questions: ['What is an inverted index?', 'How does Elasticsearch scale?', 'How to implement type-ahead autocomplete?'],
+        numbers: [{v:'<10ms',l:'Query p99'}, {v:'50GB',l:'Max Shard Size'}, {v:'1B+',l:'Docs/Cluster'}],
+        tradeoffs: { gain: 'Lightning fast full-text search.', cost: 'High RAM usage, complex to tune relevance, eventual consistency.' },
+        build: () => {
+            return [
+                { step:1, msg:"1. Crawler sends Document to Indexer.", show:['crawl','index','arr1'] },
+                { step:2, msg:"2. Indexer tokenizes text into terms.", show:['crawl','index','arr1','tok'] },
+                { step:3, msg:"3. Builds Inverted Index (term -> doc_ids).", show:['crawl','index','arr1','tok','inv'] },
+                { step:4, msg:"4. User queries terms.", show:['crawl','index','arr1','tok','inv','user','arr2'] },
+                { step:5, msg:"5. Intersect posting lists, rank via BM25, return.", show:['crawl','index','arr1','tok','inv','user','arr2','rank'] }
+            ];
+        },
+        render: (ctx, fr) => {
+            const sh = (id) => fr.show.includes(id);
+            if(sh('crawl')) box(ctx, 50, 60, 100, 50, 'Crawler', SURF2, LINE);
+            if(sh('index')) box(ctx, 250, 60, 120, 50, 'Indexer', SURF2, BLUE);
+            if(sh('arr1')) arrow(ctx, 150, 85, 250, 85, DIM, 'Doc');
+            if(sh('tok')) lbl(ctx, 'Text -> ["hello", "world"]', 310, 130, 11, DIM);
+            if(sh('inv')) {
+                box(ctx, 500, 40, 160, 120, 'Inverted Index', SURF, LINE);
+                lbl(ctx, '"hello" -> [d1, d4, d9]', 580, 80, 12, AMBER);
+                lbl(ctx, '"world" -> [d2, d4]', 580, 110, 12, AMBER);
+            }
+            if(sh('user')) box(ctx, 50, 220, 100, 50, 'User', SURF2, LINE);
+            if(sh('arr2')) arrow(ctx, 150, 245, 500, 120, DIM, 'Search "hello"');
+            if(sh('rank')) box(ctx, 300, 200, 120, 50, 'Ranker (BM25)', SURF2, GREEN);
+        }
+    },
+    {
+        id: 'notify', name: 'Notification System', cat: 'Real-time',
+        concepts: ['Fan-out pattern (1 event -> N notifications)', 'Channels: APNs, FCM, SMS, Email', 'Deduplication and rate limiting per user', 'WebSockets for real-time in-app'],
+        questions: ['How to ensure at-least-once delivery?', 'How to handle 1M concurrent connections?', 'Push vs pull for notifications?'],
+        numbers: [{v:'Millions',l:'Push/sec'}, {v:'<1s',l:'Latency'}, {v:'65K',l:'Conns/Server'}],
+        tradeoffs: { gain: 'Engages users immediately across platforms.', cost: 'Third-party delivery (APNs/FCM) can be flaky; fan-out is resource heavy.' },
+        build: () => {
+            return [
+                { step:1, msg:"1. Event triggers notification (e.g. new message).", show:['event','notif','arr1'] },
+                { step:2, msg:"2. Fetch user preferences & devices from DB.", show:['event','notif','arr1','db','arr2'] },
+                { step:3, msg:"3. Fan-out to specific Channel Workers via Queues.", show:['event','notif','arr1','db','arr2','q','workers'] },
+                { step:4, msg:"4. Workers call external APIs (APNs, FCM, SMS).", show:['event','notif','arr1','db','arr2','q','workers','ext'] },
+                { step:5, msg:"5. Retries on failure, WebSockets for active apps.", show:['event','notif','arr1','db','arr2','q','workers','ext','ws'] }
+            ];
+        },
+        render: (ctx, fr) => {
+            const sh = (id) => fr.show.includes(id);
+            if(sh('event')) box(ctx, 30, 140, 80, 50, 'Event', SURF2, LINE);
+            if(sh('notif')) box(ctx, 200, 130, 120, 60, 'Notify Svc', SURF2, BLUE);
+            if(sh('arr1')) arrow(ctx, 110, 160, 200, 160, DIM);
+            if(sh('db')) dbCyl(ctx, 190, 240, 140, 50, 'User Prefs DB', SURF2, GREEN);
+            if(sh('arr2')) arrow(ctx, 260, 190, 260, 240, DIM);
+            if(sh('q')) box(ctx, 400, 130, 60, 140, 'Kafka', SURF2, RED);
+            if(sh('workers')) {
+                box(ctx, 520, 60, 80, 40, 'iOS Wrk', SURF2, LINE);
+                box(ctx, 520, 130, 80, 40, 'And Wrk', SURF2, LINE);
+                box(ctx, 520, 200, 80, 40, 'SMS Wrk', SURF2, LINE);
+                arrow(ctx, 320, 160, 400, 160, DIM);
+                arrow(ctx, 460, 150, 520, 80, DIM);
+                arrow(ctx, 460, 170, 520, 150, DIM);
+                arrow(ctx, 460, 190, 520, 220, DIM);
+            }
+            if(sh('ext')){
+                lbl(ctx, 'APNs', 650, 80, 12, DIM);
+                lbl(ctx, 'FCM', 650, 150, 12, DIM);
+                lbl(ctx, 'Twilio', 650, 220, 12, DIM);
+            }
+            if(sh('ws')) box(ctx, 520, 270, 140, 40, 'WebSocket Svc', SURF2, GREEN);
+        }
+    },
+    {
+        id: 'twitter', name: 'Twitter / News Feed', cat: 'Social',
+        concepts: ['Fan-out on Write (Push) vs Fan-out on Read (Pull)', 'The Celebrity Problem (hybrid approach)', 'Timeline caching in Redis Sorted Sets', 'Eventual consistency for massive scale'],
+        questions: ['How to handle a celebrity with 100M followers?', 'What is fan-out on write?', 'How do you design the feed timeline?'],
+        numbers: [{v:'500M',l:'Tweets/Day'}, {v:'200',l:'Avg Followers'}, {v:'O(1)',l:'Feed Read'}],
+        tradeoffs: { gain: 'O(1) read latency for timelines.', cost: 'O(N) write cost (fan-out); requires hybrid logic for celebrities.' },
+        build: () => {
+            return [
+                { step:1, msg:"1. User posts a Tweet via Write API.", show:['user','api','arr1'] },
+                { step:2, msg:"2. Fan-out service gets follower list.", show:['user','api','arr1','fan','arr2'] },
+                { step:3, msg:"3. (Normal User) Push tweet ID to follower Redis caches.", show:['user','api','arr1','fan','arr2','redis','arr3'] },
+                { step:4, msg:"4. Followers read pre-computed feed in O(1) time.", show:['user','api','arr1','fan','arr2','redis','arr3','read','arr4'] },
+                { step:5, msg:"5. (Celebrity) Pull logic merges hot tweets at read time.", show:['user','api','arr1','fan','arr2','redis','arr3','read','arr4','celeb'] }
+            ];
+        },
+        render: (ctx, fr) => {
+            const sh = (id) => fr.show.includes(id);
+            if(sh('user')) box(ctx, 30, 80, 80, 50, 'User', SURF2, LINE);
+            if(sh('api')) box(ctx, 180, 80, 100, 50, 'Write API', SURF2, BLUE);
+            if(sh('arr1')) arrow(ctx, 110, 105, 180, 105, DIM, 'Tweet');
+            if(sh('fan')) box(ctx, 350, 80, 120, 50, 'Fan-out Svc', SURF2, PURPLE);
+            if(sh('arr2')) arrow(ctx, 280, 105, 350, 105, DIM);
+            if(sh('redis')){
+                dbCyl(ctx, 550, 40, 120, 50, 'User A Feed', SURF2, RED);
+                dbCyl(ctx, 550, 110, 120, 50, 'User B Feed', SURF2, RED);
+            }
+            if(sh('arr3')){ arrow(ctx, 470, 105, 550, 65, RED, 'Push'); arrow(ctx, 470, 105, 550, 135, RED, 'Push'); }
+            
+            if(sh('read')) box(ctx, 750, 75, 100, 50, 'Followers', SURF2, LINE);
+            if(sh('arr4')) arrow(ctx, 670, 65, 750, 85, GREEN, 'Read');
+            
+            if(sh('celeb')){
+                box(ctx, 350, 200, 120, 50, 'Celeb Tweets', SURF, AMBER);
+                arrow(ctx, 750, 110, 470, 220, AMBER, 'Pull on read');
+            }
+        }
+    }
+];
+
+let cur = TOPICS[0], frames = cur.build(), idx = 0;
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function renderUI() {
+    // Sidebar
+    const list = document.getElementById('topicList');
+    list.innerHTML = '';
+    TOPICS.forEach(t => {
+        const btn = document.createElement('button');
+        btn.className = 'topic-btn' + (t.id === cur.id ? ' active' : '');
+        btn.innerHTML = `<span class="topic-name">${t.name}</span><span class="topic-cat">${t.cat}</span>`;
+        btn.onclick = () => setTopic(t);
+        list.appendChild(btn);
+    });
+
+    // Header
+    document.getElementById('titleText').innerText = cur.name;
+    document.getElementById('catBadge').innerText = cur.cat;
+
+    // Data
+    document.getElementById('conceptsList').innerHTML = cur.concepts.map(c => `<li>${c}</li>`).join('');
+    document.getElementById('numbersList').innerHTML = cur.numbers.map(n => `<div class="number-pill">${n.v}<span>${n.l}</span></div>`).join('');
+    document.getElementById('qList').innerHTML = cur.questions.map(q => `<div class="q-item"><strong>Q:</strong> ${q}</div>`).join('');
+    
+    document.getElementById('tradeGain').innerText = cur.tradeoffs.gain;
+    document.getElementById('tradeCost').innerText = cur.tradeoffs.cost;
+
+    renderCanvas();
+}
+
+function setTopic(t) {
+    cur = t;
+    frames = cur.build();
+    idx = 0;
+    history.replaceState(null, '', '?topic=' + t.id);
+    renderUI();
+}
+
+function renderCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const fr = frames[idx];
+    document.getElementById('stepInfo').innerText = `Step ${idx + 1} of ${frames.length}`;
+    document.getElementById('explanation').innerText = fr.msg;
+    
+    document.getElementById('btnPrev').disabled = (idx === 0);
+    document.getElementById('btnNext').disabled = (idx === frames.length - 1);
+
+    cur.render(ctx, fr);
+}
+
+document.getElementById('btnPrev').onclick = () => { if(idx > 0) { idx--; renderCanvas(); } };
+document.getElementById('btnNext').onclick = () => { if(idx < frames.length - 1) { idx++; renderCanvas(); } };
+
+// Init
+const params = new URLSearchParams(window.location.search);
+if(params.has('topic')){
+    const t = TOPICS.find(x => x.id === params.get('topic'));
+    if(t) cur = t;
+}
+frames = cur.build();
+renderUI();
+
+</script>
+</body>
+</html>
