@@ -2241,6 +2241,17 @@ function draw() {
   stepCounter.textContent = `Step ${fidx+1} / ${frames.length}`;
   frameNote.innerHTML = fr.say || fr.note || "";
   
+  // Highlight Code
+  document.querySelectorAll(".ln").forEach(el => el.classList.remove("active"));
+  if (fr.line) {
+      const activeLine = document.getElementById("ln-" + fr.line);
+      if (activeLine) {
+          activeLine.classList.add("active");
+          // Optional: Scroll code block to active line
+          activeLine.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+  }
+  
   // Update Tape
   const ticks = tape.children;
   for(let i=0; i<ticks.length; i++){
