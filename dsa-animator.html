@@ -496,19 +496,19 @@ PATTERNS.push({
   },
   render(ctx,fr){
     tagline(ctx,"sort by start, then extend-or-append in one pass");
-    const X=s=>120+s*44;
-    // axis
-    ctx.strokeStyle=C.line; ctx.beginPath(); ctx.moveTo(X(0),150); ctx.lineTo(X(19),150); ctx.stroke();
-    for(let s=0;s<=19;s++){ txt(ctx,String(s),X(s),168,9,C.faint); }
+    const X = s => 60 + s*46;
+    ctx.strokeStyle = C.line; ctx.beginPath(); ctx.moveTo(X(0),350); ctx.lineTo(X(19),350); ctx.stroke();
+    for(let s=0;s<=19;s++){ txt(ctx,String(s),X(s),370,10,C.faint); }
     fr.iv.forEach((v,i)=>{
-      const y=195+i*30;
-      box(ctx,X(v[0]),y,X(v[1])-X(v[0]),20, i===fr.idx?"#2a2438":C.cell, i===fr.idx?C.purple:C.line,6);
-      txt(ctx,`[${v}]`,X(v[1])+34,y+10,11,i===fr.idx?C.purple:C.mut,"left");
+      const y = 200 + i*34;
+      const isActive = (i === fr.idx);
+      box(ctx, X(v[0]), y, X(v[1])-X(v[0]), 24, isActive ? "#2a220f" : C.cell, isActive ? C.amber : C.line, 6);
+      txt(ctx, `[${v}]`, X(v[1])+34, y+12, 12, isActive ? C.amber : C.mut, "left");
     });
-    fr.merged.forEach(v=>{
-      box(ctx,X(v[0]),108,X(v[1])-X(v[0]),22,"#1f2d24",C.green,6);
+    fr.merged.forEach((v,i)=>{
+      box(ctx, X(v[0]), 100 + i*28, X(v[1])-X(v[0]), 24, "#123832", C.cyan, 6);
     });
-    txt(ctx,"merged",108,119,12,C.green,"right");
+    txt(ctx,"merged", 60, 80, 14, C.cyan, "left");
   },
   kotlin:`<span class="k">val</span> sorted = intervals.sortedBy { it[<span class="nu">0</span>] }        <span class="cm">// ALWAYS sort by start first</span>
 <span class="k">val</span> out = <span class="k">mutableListOf</span>&lt;<span class="ty">IntArray</span>&gt;()
@@ -691,8 +691,31 @@ PATTERNS.push({
   },
   render(ctx,fr){
     tagline(ctx,"one pass: check the complement, then record yourself");
-    cells(ctx,fr.vals,300,150,0,80,{hi:fr.hi});
-    txt(ctx,"seen: "+JSON.stringify(fr.seen),500,310,15,C.cyan);
+    const arr = fr.vals, n = arr.length, cw = 54, gap = 8, startX = 140, y = 140;
+    txt(ctx, "Array", startX - 40, y + cw/2, 14, C.faint);
+    for(let i=0; i<n; i++) {
+      const x = startX + i*(cw+gap);
+      let fill = C.cell, stroke = C.line, tc = C.ink;
+      if (fr.hi && fr.hi[i]) {
+        const isFound = Object.keys(fr.hi).length === 2 && fr.hi[i].stroke === C.green;
+        fill = isFound ? "#123832" : "#2a220f";
+        stroke = isFound ? C.cyan : C.amber;
+        tc = stroke;
+      }
+      box(ctx, x, y, cw, cw, fill, stroke, 8);
+      txt(ctx, String(arr[i]), x + cw/2, y + cw/2, 16, tc);
+      txt(ctx, String(i), x + cw/2, y + cw + 16, 11, C.faint);
+    }
+    const mapX = 600, mapY = 100;
+    txt(ctx, "Hash Map (value → index)", mapX + 80, mapY - 20, 14, C.faint);
+    Object.keys(fr.seen).forEach((k, idx) => {
+      const v = fr.seen[k];
+      const highlighted = (fr.hi && fr.hi[v] && fr.hi[v].stroke === C.green);
+      box(ctx, mapX, mapY + idx*38, 160, 32, highlighted ? "#123832" : C.cell, highlighted ? C.cyan : C.line, 6);
+      txt(ctx, `${k} → ${v}`, mapX + 80, mapY + idx*38 + 16, 14, highlighted ? C.cyan : C.ink);
+    });
+    if (Object.keys(fr.hi || {}).length === 1) txt(ctx, "complement needed", 250, 240, 14, C.amber);
+    else if (Object.keys(fr.hi || {}).length === 2) txt(ctx, "complement found!", 250, 240, 14, C.cyan);
   },
   kotlin:`<span class="k">val</span> seen = <span class="ty">HashMap</span>&lt;<span class="ty">Int</span>,<span class="ty">Int</span>&gt;()
 <span class="k">for</span> ((i, v) <span class="k">in</span> nums.withIndex()) {
@@ -811,8 +834,28 @@ PATTERNS.push({
   },
   render(ctx,fr){
     tagline(ctx,"always move the shorter wall");
-    const g=bars(ctx,fr.h,220,90,560,220,{hi:{[fr.lo]:{fill:"#26313d",stroke:C.cyan},[fr.hi]:{fill:"#2a2a1f",stroke:C.amber}}});
-    txt(ctx,"best = "+fr.best,500,370,18,C.green);
+    const h = fr.h, n = h.length, maxH = 220, w = 560;
+    const bw = Math.min(60, (w-(n-1)*8)/n), gap = 8, startX = (1000 - (n*bw+(n-1)*gap))/2, baseY = 90 + maxH;
+    const mx = Math.max(...h);
+    if(fr.lo < fr.hi) {
+      const loX = startX + fr.lo*(bw+gap), hiX = startX + fr.hi*(bw+gap);
+      const waterH = Math.max(10, (Math.min(h[fr.lo], h[fr.hi])/mx)*maxH);
+      ctx.fillStyle = "rgba(122,162,247,0.15)";
+      ctx.fillRect(loX + bw/2, baseY - waterH, hiX - loX, waterH);
+    }
+    for(let i=0; i<n; i++){
+      const h_px = Math.max(10, (h[i]/mx)*maxH), bx = startX + i*(bw+gap), yy = baseY - h_px;
+      let fill = C.cell, stroke = C.line, tc = C.mut;
+      if(i === fr.lo) { fill = "#2a220f"; stroke = C.amber; tc = C.amber; }
+      else if(i === fr.hi) { fill = "#123832"; stroke = C.cyan; tc = C.cyan; }
+      box(ctx, bx, yy, bw, h_px, fill, stroke, 5);
+      txt(ctx, String(h[i]), bx + bw/2, baseY + 16, 12, tc);
+      if(i === fr.lo) txt(ctx, "lo", bx + bw/2, yy - 14, 13, C.amber);
+      if(i === fr.hi) txt(ctx, "hi", bx + bw/2, yy - 14, 13, C.cyan);
+    }
+    const area = (fr.hi - fr.lo) * Math.min(h[fr.lo], h[fr.hi]);
+    txt(ctx, "Area: " + area, 350, baseY + 60, 16, C.cyan);
+    txt(ctx, "Max Area: " + fr.best, 650, baseY + 60, 16, C.green);
   },
   kotlin:`<span class="k">var</span> lo = <span class="nu">0</span>; <span class="k">var</span> hi = height.lastIndex; <span class="k">var</span> best = <span class="nu">0</span>
 <span class="k">while</span> (lo &lt; hi) {
@@ -996,11 +1039,26 @@ PATTERNS.push({
   },
   render(ctx,fr){
     tagline(ctx,"halve the space every step — O(log n)");
-    const hi={};
-    for(let i=0;i<fr.a.length;i++) if(i<fr.lo||i>fr.hi) hi[i]={fill:"#10151b",color:C.faint};
-    if(fr.mid>=0)hi[fr.mid]={fill:"#2a2438",stroke:C.purple,color:C.purple};
-    const g=cells(ctx,fr.a,290,150,0,80,{hi});g.y=236;
-    pointer(ctx,g,fr.lo,"lo",C.cyan,0);pointer(ctx,g,fr.hi,"hi",C.amber,1);
+    const arr = fr.a, n = arr.length, t = 9, cw = 54, gap = 8;
+    const startX = (1000 - (n*cw+(n-1)*gap))/2, y = 190;
+    const found = fr.mid >= 0 && arr[fr.mid] === t;
+    txt(ctx, "Target = " + t, 500, 130, 15, C.faint);
+    for(let i=0; i<n; i++) {
+      const x = startX + i*(cw+gap);
+      let fill = C.cell, stroke = C.line, tc = C.ink;
+      if (i < fr.lo || i > fr.hi) { fill = C.dim; stroke = "#1a1e2b"; tc = C.faint; }
+      if (i === fr.mid) {
+        if (found) { fill = "#123832"; stroke = C.cyan; tc = C.cyan; }
+        else { fill = "#2a220f"; stroke = C.amber; tc = C.amber; }
+      }
+      box(ctx, x, y, cw, 54, fill, stroke, 8);
+      txt(ctx, String(arr[i]), x + cw/2, y + 27, 16, tc);
+      txt(ctx, String(i), x + cw/2, y + 70, 11, C.faint);
+    }
+    if (fr.lo >= 0) txt(ctx, "lo", startX + fr.lo*(cw+gap), y - 18, 12, C.faint, "left");
+    if (fr.hi >= 0 && fr.hi < n) txt(ctx, "hi", startX + fr.hi*(cw+gap) + cw, y - 18, 12, C.faint, "right");
+    if (fr.mid >= 0) txt(ctx, "mid", startX + fr.mid*(cw+gap) + cw/2, y - 18, 13, found ? C.cyan : C.amber);
+    if (found) txt(ctx, "FOUND at index " + fr.mid + " ✓", 500, 310, 18, C.cyan);
   },
   kotlin:`<span class="k">var</span> lo = <span class="nu">0</span>; <span class="k">var</span> hi = nums.lastIndex
 <span class="k">while</span> (lo &lt;= hi) {
@@ -1188,10 +1246,27 @@ PATTERNS.push({
   },
   render(ctx,fr){
     tagline(ctx,"closers must match the most recent opener — LIFO");
-    const hi={};if(fr.i>=0)hi[fr.i]={fill:"#2a2438",stroke:C.purple,color:C.purple};
-    cells(ctx,fr.s,330,130,0,72,{hi});
-    txt(ctx,"stack (top right):",380,290,14,C.faint,"right");
-    cells(ctx,fr.st.length?fr.st:["∅"],400,260,0,60);
+    const n = fr.s.length, cw = 42, gap = 6, startX = (1000 - (n*cw+(n-1)*gap))/2, topY = 80;
+    const isMismatch = fr.say.includes("MISMATCH") || fr.say.includes("false");
+    for(let i=0; i<n; i++){
+      const x = startX + i*(cw+gap);
+      let fill = C.cell, stroke = C.line, tc = C.ink;
+      if(i === fr.i) {
+        if(isMismatch) { fill = "#301616"; stroke = C.red; tc = C.red; }
+        else { fill = "#2a220f"; stroke = C.amber; tc = C.amber; }
+      } else if(i < fr.i) { tc = C.dim; }
+      box(ctx, x, topY, cw, cw, fill, stroke, 8);
+      txt(ctx, fr.s[i], x + cw/2, topY + cw/2, 18, tc);
+    }
+    const stackX = 300, baseY = 400, sw = 76, sh = 38;
+    txt(ctx, "stack", stackX + sw/2, baseY + 24, 13, C.dim);
+    for(let s=0; s<fr.st.length; s++){
+      const yy = baseY - (s+1)*(sh+6);
+      box(ctx, stackX, yy, sw, sh, "#161b28", C.line, 8);
+      txt(ctx, fr.st[s], stackX + sw/2, yy + sh/2, 16, C.ink);
+    }
+    if(fr.i === n - 1 && fr.st.length === 0) txt(ctx, "VALID ✓", 650, 300, 20, C.cyan);
+    else if(fr.i === n - 1 || isMismatch) txt(ctx, "INVALID ✕", 650, 300, 20, C.red);
   },
   kotlin:`<span class="k">val</span> stack = <span class="ty">ArrayDeque</span>&lt;<span class="ty">Char</span>&gt;()
 <span class="k">val</span> pairs = mapOf(<span class="s">')'</span> <span class="k">to</span> <span class="s">'('</span>, <span class="s">']'</span> <span class="k">to</span> <span class="s">'['</span>, <span class="s">'}'</span> <span class="k">to</span> <span class="s">'{'</span>)
@@ -1386,9 +1461,40 @@ PATTERNS.push({
   },
   render(ctx,fr){
     tagline(ctx,"save next first — then flip the arrow");
-    const labels={};if(fr.prev>=0)labels[fr.prev]="prev";if(fr.node>=0)labels[fr.node]="node";
-    const hi={};if(fr.node>=0)hi[fr.node]={stroke:C.purple};if(fr.prev>=0)hi[fr.prev]={stroke:C.green};
-    chain(ctx,fr.vals,fr.links,270,210,{hi,labels});
+    const n = fr.vals.length, cw = 64, ch = 54, gap = 46;
+    const startX = (1000 - (n*cw+(n-1)*gap))/2, y = 200;
+    const xOf = i => startX + i*(cw+gap);
+    for(let i=0; i<n; i++){
+      const nxt = fr.links[i], y1 = y + ch/2;
+      ctx.strokeStyle = (nxt > i) ? C.line : C.cyan; ctx.lineWidth = 2;
+      ctx.beginPath();
+      if(nxt === -1){
+        const nx = xOf(i) + cw/2, ny = y + ch + 34;
+        ctx.moveTo(xOf(i) + cw/2, y + ch + 4); ctx.lineTo(nx, ny - 12);
+        txt(ctx, "NULL", nx, ny, 12, C.dim);
+      } else if(nxt > i){
+        ctx.moveTo(xOf(i) + cw, y1 - 8); ctx.lineTo(xOf(nxt), y1 - 8);
+      } else {
+        ctx.moveTo(xOf(i), y1 + 8); ctx.lineTo(xOf(nxt) + cw, y1 + 8);
+      }
+      ctx.stroke();
+      if(nxt !== -1) {
+        const ax = nxt > i ? xOf(nxt) : xOf(nxt)+cw;
+        const ay = nxt > i ? y1 - 8 : y1 + 8;
+        const dir = nxt > i ? -1 : 1;
+        ctx.fillStyle = (nxt > i) ? C.line : C.cyan;
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax+8*dir, ay-4); ctx.lineTo(ax+8*dir, ay+4); ctx.fill();
+      }
+    }
+    for(let i=0; i<n; i++){
+      let fill = C.cell, stroke = C.line, tc = C.ink;
+      if(i === fr.node) { fill = "#2a220f"; stroke = C.amber; tc = C.amber; }
+      else if(i === fr.prev) { fill = "#123832"; stroke = C.cyan; tc = C.cyan; }
+      box(ctx, xOf(i), y, cw, ch, fill, stroke, 8);
+      txt(ctx, String(fr.vals[i]), xOf(i)+cw/2, y+ch/2, 16, tc);
+    }
+    if(fr.prev >= 0) txt(ctx, "prev", xOf(fr.prev)+cw/2, y - 16, 13, C.cyan);
+    if(fr.node >= 0) txt(ctx, "curr", xOf(fr.node)+cw/2, y - 34, 13, C.amber);
   },
   kotlin:`<span class="k">var</span> prev: <span class="ty">ListNode</span>? = <span class="k">null</span>
 <span class="k">var</span> node = head
@@ -1553,9 +1659,22 @@ PATTERNS.push({
   },
   render(ctx,fr){
     tagline(ctx,"snapshot the queue size — that's one level");
-    tree(ctx,fr.v,{hi:fr.hi});
-    txt(ctx,"queue: ["+fr.q.map(i=>fr.v[i]).join(", ")+"]",500,350,15,C.cyan);
-    txt(ctx,"levels: "+JSON.stringify(fr.out),500,385,14,C.green);
+    tree(ctx,fr.v,{edges:true});
+    const visited = new Set(fr.out.flat());
+    const curN = Number(Object.keys(fr.hi).find(k=>fr.hi[k].stroke===C.green));
+    for(let i=0; i<7; i++){
+      if(fr.v[i] == null) continue;
+      const [x,y] = TREE_POS[i];
+      let fill = C.cell, stroke = C.line, tc = C.ink;
+      if(visited.has(fr.v[i])) { fill = "#123832"; stroke = C.cyan; tc = C.cyan; }
+      if(i === curN) { fill = "#2a220f"; stroke = C.amber; tc = C.amber; }
+      ctx.beginPath(); ctx.arc(x,y,26,0,7);
+      ctx.fillStyle = fill; ctx.fill();
+      ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke();
+      txt(ctx, String(fr.v[i]), x, y, 15, tc);
+    }
+    txt(ctx, "queue: [ " + fr.q.map(i=>fr.v[i]).join(", ") + " ]", 500, 360, 15, C.cyan);
+    txt(ctx, "visited: " + JSON.stringify(fr.out), 500, 390, 14, C.ink);
   },
   kotlin:`<span class="k">val</span> q = <span class="ty">ArrayDeque</span>&lt;<span class="ty">TreeNode</span>&gt;().apply { root?.let { add(it) } }
 <span class="k">while</span> (q.isNotEmpty()) {
@@ -1730,13 +1849,14 @@ PATTERNS.push({
     for(let r=0;r<3;r++)for(let c=0;c<3;c++){
       const s=fr.st[r][c];
       const isCur=fr.cur&&fr.cur[0]===r&&fr.cur[1]===c;
-      box(ctx,x0+c*(cs+gap),y0+r*(cs+gap),cs,cs,
-        s===1?"#2a2a1f":s===2?"#1f2d24":"#131a21",
-        isCur?C.purple:s===1?C.amber:s===2?C.green:C.line,9);
-      txt(ctx,s===0?"~":s===1?"land":"sunk",x0+c*(cs+gap)+cs/2,y0+r*(cs+gap)+cs/2,13,
-        s===1?C.amber:s===2?C.green:C.faint);
+      let fill = "#0a1526", stroke = "#1a3a5a", tc = "#2a5a7a"; // dim blue
+      if(s===1) { fill = C.cell; stroke = C.line; tc = C.ink; }
+      else if(s===2) { fill = "#1f2d24"; stroke = C.green; tc = C.green; }
+      if(isCur) { fill = "#2a220f"; stroke = C.amber; tc = C.amber; }
+      box(ctx, x0+c*(cs+gap), y0+r*(cs+gap), cs, cs, fill, stroke, 9);
+      txt(ctx, s===0?"0":"1", x0+c*(cs+gap)+cs/2, y0+r*(cs+gap)+cs/2, 24, tc);
     }
-    txt(ctx,"islands = "+fr.count,500,430,18,C.green);
+    txt(ctx,"Islands: "+fr.count, 800, 100, 18, C.cyan);
   },
   kotlin:`<span class="k">fun</span> <span class="fn">numIslands</span>(g: <span class="ty">Array</span>&lt;<span class="ty">CharArray</span>&gt;): <span class="ty">Int</span> {
     <span class="k">var</span> count = <span class="nu">0</span>
