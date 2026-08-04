@@ -3,7 +3,7 @@ FROM nginx:alpine
 
 # Copy site files into nginx's html directory
 COPY index.html /usr/share/nginx/html/index.html
-COPY dsa-interview-animator.html /usr/share/nginx/html/dsa-interview-animator.html
+COPY dsa-animator.html /usr/share/nginx/html/dsa-animator.html
 
 # Copy our custom nginx config template
 COPY nginx.conf /etc/nginx/templates/default.conf.template

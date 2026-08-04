@@ -1,0 +1,2062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DSA Animator — our problems, step by step</title>
+<style>
+:root{
+  --bg:#0f1419; --surface:#161d24; --surface2:#1b242d; --line:#2a3641; --line2:#3a4854;
+  --ink:#e6edf3; --mut:#9fb0bf; --faint:#71828f;
+  --a1:#7aa2f7; --a2:#9ece6a; --a3:#e0af68; --a4:#bb9af7; --a5:#7dcfff; --warn:#f7768e;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1060px;margin:0 auto;padding:20px 16px 60px}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+header{border-bottom:2px solid var(--line2);padding-bottom:14px;margin-bottom:16px}
+h1{margin:0;font-size:22px;letter-spacing:-.3px}
+.tag{display:inline-block;background:var(--surface2);border:1px solid var(--line2);color:var(--mut);
+  font-size:10.5px;text-transform:uppercase;letter-spacing:1.3px;padding:3px 10px;border-radius:20px;margin-bottom:8px}
+.lede{color:var(--mut);font-size:13.5px;margin:6px 0 0}
+kbd{background:var(--surface2);border:1px solid var(--line2);border-bottom-width:2px;border-radius:4px;
+  padding:1px 6px;font-size:11px;color:var(--mut)}
+
+.plist{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.plist button{border:1px solid var(--line);background:var(--surface);color:var(--mut);border-radius:8px;
+  padding:7px 12px;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left}
+.plist button.on{background:var(--a1);border-color:var(--a1);color:#0b1016}
+.plist button .d{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;opacity:.8}
+
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+canvas{width:100%;height:auto;display:block;border-radius:8px;background:#0b1016}
+.controls{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.controls button{border:1px solid var(--line2);background:var(--surface2);color:var(--ink);border-radius:9px;
+  padding:10px 15px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px}
+.controls button.play{background:var(--a2);border-color:var(--a2);color:#0b1016;min-width:104px}
+.controls .step{font-size:12.5px;color:var(--faint);margin-left:auto;white-space:nowrap}
+.controls select{background:var(--surface2);color:var(--ink);border:1px solid var(--line2);border-radius:8px;
+  padding:9px 10px;font:inherit;font-size:13px}
+input[type=range]{flex:1 1 120px;accent-color:var(--a1)}
+
+.say{margin-top:12px;background:rgba(122,162,247,.07);border:1px solid rgba(122,162,247,.26);
+  border-left:3px solid var(--a1);border-radius:0 9px 9px 0;padding:11px 14px;min-height:58px;
+  font-size:14.5px;color:#cfd9e2}
+.say b{color:#fff}
+
+.codes{margin-top:12px}
+.ctabs{display:flex;gap:6px;margin-bottom:8px}
+.ctabs button{border:1px solid var(--line);background:var(--surface);color:var(--mut);border-radius:7px;
+  padding:6px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
+.ctabs button.on{background:var(--surface2);color:var(--a5);border-color:var(--line2)}
+pre{background:#0b1016;border:1px solid var(--line);border-left:3px solid var(--a1);border-radius:0 9px 9px 0;
+  padding:13px 15px;overflow-x:auto;margin:0;font-size:12.4px;line-height:1.6;color:#d6e0ea}
+.k{color:#bb9af7}.s{color:#9ece6a}.cm{color:#5c6f7e;font-style:italic}.ty{color:#7dcfff}.fn{color:#7aa2f7}.nu{color:#e0af68}
+
+@media (max-width:720px){
+  .wrap{padding:12px 10px 50px}
+  h1{font-size:18px}
+  .controls button{flex:1 1 auto}
+  .controls .step{margin-left:0;width:100%;text-align:center}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:10px">
+    <span class="tag">DSA Animator</span>
+    <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;
+       color:var(--mut);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 14px;
+       background:var(--surface);transition:all 0.2s;"
+       onmouseover="this.style.color='var(--ink)';this.style.borderColor='var(--line2)'"
+       onmouseout="this.style.color='var(--mut)';this.style.borderColor='var(--line)'">
+      &#8592; Home
+    </a>
+  </div>
+  <h1>DSA Interview Animator</h1>
+  <p class="lede">38 patterns &amp; problems animated step-by-step. Click any card to jump straight to it.
+  <kbd>space</kbd> play/pause · <kbd>&larr;</kbd><kbd>&rarr;</kbd> step</p>
+</header>
+
+<div class="plist" id="plist"></div>
+
+<div class="stage">
+  <canvas id="cv" width="1000" height="460"></canvas>
+  <div class="controls">
+    <button id="restart" title="restart">&#10226;</button>
+    <button id="back">&#9665;</button>
+    <button id="play" class="play">&#9654; Play</button>
+    <button id="fwd">&#9655;</button>
+    <input type="range" id="scrub" min="0" max="0" value="0">
+    <select id="speed"><option value="1600">Slow</option><option value="1000" selected>Normal</option><option value="550">Fast</option></select>
+    <span class="step" id="stepLbl"></span>
+  </div>
+</div>
+
+<div class="say" id="say"></div>
+
+<div class="codes">
+  <div class="ctabs">
+    <button id="tabK" class="on">Kotlin</button>
+    <button id="tabJ">Java</button>
+  </div>
+  <pre id="codeBox"></pre>
+</div>
+
+</div>
+
+<script>
+"use strict";
+/* =================================================================== helpers */
+const C = { bg:"#0b1016", cell:"#1b242d", line:"#3a4854", ink:"#e6edf3", mut:"#9fb0bf",
+  faint:"#71828f", blue:"#7aa2f7", green:"#9ece6a", amber:"#e0af68", purple:"#bb9af7",
+  cyan:"#7dcfff", red:"#f7768e", dim:"#161d24" };
+
+function box(ctx,x,y,w,h,fill,stroke,r=8){
+  ctx.beginPath(); ctx.roundRect(x,y,w,h,r);
+  if(fill){ ctx.fillStyle=fill; ctx.fill(); }
+  if(stroke){ ctx.strokeStyle=stroke; ctx.lineWidth=1.6; ctx.stroke(); }
+}
+function txt(ctx,s,x,y,size=15,color=C.ink,align="center",font="ui-monospace,Menlo,monospace"){
+  ctx.fillStyle=color; ctx.font=`${size}px ${font}`; ctx.textAlign=align; ctx.textBaseline="middle";
+  ctx.fillText(s,x,y);
+}
+function tagline(ctx,s,x=500,y=24){ txt(ctx,s,x,y,13,C.faint,"center","-apple-system,Segoe UI,Roboto,sans-serif"); }
+
+/* array of cells with optional pointer arrows underneath */
+function cells(ctx,vals,x,y,w,h,opts={}){
+  const {hi={},labels=null,gap=6}=opts;
+  const cw=Math.min(74,(1000-2*x-(vals.length-1)*gap)/vals.length);
+  vals.forEach((v,i)=>{
+    const cx=x+i*(cw+gap);
+    const st=hi[i]||{};
+    box(ctx,cx,y,cw,h, st.fill||C.cell, st.stroke||C.line);
+    txt(ctx,String(v),cx+cw/2,y+h/2,16,st.color||C.ink);
+    if(labels&&labels[i]!=null) txt(ctx,String(labels[i]),cx+cw/2,y+h+16,11,C.faint);
+  });
+  return {cw,gap,x0:x};
+}
+function pointer(ctx,geom,i,label,color,row=0){
+  const cx=geom.x0+i*(geom.cw+geom.gap)+geom.cw/2, ty=geom.py||0;
+  const y=(geom.y||0);
+  ctx.beginPath(); ctx.moveTo(cx,y+4+row*30); ctx.lineTo(cx-7,y+18+row*30); ctx.lineTo(cx+7,y+18+row*30);
+  ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+  txt(ctx,label,cx,y+30+row*30,12,color);
+}
+
+/* =================================================================== patterns */
+const PATTERNS=[];
+
+/* ---------- 1 · Minimum Sum (target-round sample 1) ---------- */
+PATTERNS.push({
+  id:"minsum", name:"Minimum Sum", d:"sample · heap greedy",
+  build(){
+    let a=[10,20,7], k=4, f=[];
+    const sum=x=>x.reduce((s,v)=>s+v,0);
+    f.push({vals:[...a],hi:{},say:"<b>nums = [10, 20, 7], k = 4.</b> Each operation halves one element (ceiling). Greedy claim: always halve the current <b>largest</b> — it gives the biggest single reduction, floor(x/2)."});
+    for(let op=1;op<=k;op++){
+      const mi=a.indexOf(Math.max(...a));
+      f.push({vals:[...a],hi:{[mi]:{fill:"#2a2438",stroke:C.purple,color:C.purple}},
+        say:`Operation ${op}: the largest is <b>${a[mi]}</b>. Halving it reduces the sum by floor(${a[mi]}/2) = <b>${Math.floor(a[mi]/2)}</b> — more than halving anything else would.`});
+      a[mi]=Math.ceil(a[mi]/2);
+      f.push({vals:[...a],hi:{[mi]:{fill:"#1f2d24",stroke:C.green,color:C.green}},
+        say:`It becomes ceil = <b>${a[mi]}</b>. Sum is now <b>${sum(a)}</b>.`});
+    }
+    f.push({vals:[...a],hi:Object.fromEntries(a.map((_,i)=>[i,{stroke:C.green}])),
+      say:`Done: [${a.join(", ")}], sum = <b>${sum(a)}</b> — the minimum. In code this is a <b>max-heap</b>: pop, halve, push, k times. O(n + k log n). Trap: <code>(x+1)/2</code> for the ceiling, and stop early when the max is 1.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"always halve the current largest — max-heap greedy");
+    const g=cells(ctx,fr.vals,320,150,0,86,{hi:fr.hi});
+    const s=fr.vals.reduce((a,b)=>a+b,0);
+    txt(ctx,"sum = "+s,500,320,22,C.amber);
+  },
+  kotlin:`<span class="k">val</span> heap = <span class="ty">PriorityQueue</span>&lt;<span class="ty">Int</span>&gt;(compareByDescending { it })
+nums.forEach { heap.add(it) }
+<span class="k">var</span> sum = nums.sum().toLong()
+<span class="k">repeat</span>(k) {
+    <span class="k">val</span> top = heap.poll()
+    <span class="k">if</span> (top &lt;= <span class="nu">1</span>) <span class="k">return@repeat</span>       <span class="cm">// no further progress</span>
+    <span class="k">val</span> halved = (top + <span class="nu">1</span>) / <span class="nu">2</span>       <span class="cm">// integer ceiling</span>
+    sum -= (top - halved)
+    heap.add(halved)
+}`,
+  java:`<span class="ty">PriorityQueue</span>&lt;<span class="ty">Integer</span>&gt; heap = <span class="k">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;(<span class="ty">Comparator</span>.reverseOrder());
+<span class="k">for</span> (<span class="k">int</span> v : nums) heap.add(v);
+<span class="k">long</span> sum = ...;
+<span class="k">while</span> (k-- &gt; <span class="nu">0</span>) {
+    <span class="k">int</span> top = heap.poll();
+    <span class="k">if</span> (top &lt;= <span class="nu">1</span>) <span class="k">break</span>;
+    <span class="k">int</span> halved = (top + <span class="nu">1</span>) / <span class="nu">2</span>;    <span class="cm">// NOT Math.ceil(top/2) — that floors first</span>
+    sum -= (top - halved);
+    heap.add(halved);
+}`
+});
+
+/* ---------- 2 · Grid + Pickaxe (target-round sample 2) ---------- */
+PATTERNS.push({
+  id:"pickaxe", name:"Grid + Pickaxe", d:"sample · BFS unlock",
+  build(){
+    // sample 2 of the sample doc: NO case
+    const rows=[".*.","**."], sr=1,sc=2, dr=0,dc=1; // 0-based (2,3)->(1,2)
+    const m=2,n=3;
+    const state=Array.from({length:m},(_,r)=>rows[r].split("").map(ch=>ch==="."?0:2)); // 0 free,1 reached,2 block,3 hit1,4 brokenReached
+    const f=[];
+    const snap=(say,extra={})=>f.push({state:state.map(r=>[...r]),sr,sc,dr,dc,say,...extra});
+    snap("<b>Sample 2.</b> '.' free, '*' hollow block. A block breaks only when you can reach <b>two or more</b> of its neighbours. Start (2,3), destination (1,2). Is there a path?");
+    state[sr][sc]=1;
+    snap("BFS from the start. The frontier holds reachable free cells; every blocked neighbour gets a hit counter.");
+    const q=[[sr,sc]]; const D=[[1,0],[-1,0],[0,1],[0,-1]];
+    while(q.length){
+      const [r,c]=q.shift();
+      for(const [dy,dx] of D){
+        const nr=r+dy,nc=c+dx;
+        if(nr<0||nr>=m||nc<0||nc>=n) continue;
+        const s=state[nr][nc];
+        if(s===0){ state[nr][nc]=1; q.push([nr,nc]);
+          snap(`Reached free cell (${nr+1},${nc+1}).`);}
+        else if(s===2){ state[nr][nc]=3;
+          snap(`Hit block (${nr+1},${nc+1}) from one side — counter = 1. Not enough to break it.`);}
+        else if(s===3){ state[nr][nc]=4; q.push([nr,nc]);
+          snap(`Second side reaches block (${nr+1},${nc+1}) — counter = 2, it <b>breaks</b> and joins the frontier.`);}
+      }
+    }
+    const yes = state[dr][dc]===1||state[dr][dc]===4;
+    snap(`Frontier exhausted. Destination (1,2) has hit counter 1 — its other neighbours are free but <b>unreachable</b>, and a free cell that can't be reached can never supply a hit. Answer: <b>${yes?"YES":"NO"}</b>. That is the whole trap: “two sides” means two <i>reachable</i> neighbours.`);
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"blocks unlock at 2 hits — but hits must come from REACHABLE cells");
+    const cs=104,gap=10,x0=500-(3*cs+2*gap)/2,y0=110;
+    for(let r=0;r<2;r++)for(let c=0;c<3;c++){
+      const s=fr.state[r][c];
+      let fill=C.cell, stroke=C.line, label="", lc=C.ink;
+      if(s===1){fill="#1f2d24";stroke=C.green;}
+      if(s===2){fill="#2a1f26";stroke=C.red;label="*";lc=C.red;}
+      if(s===3){fill="#2a1f26";stroke=C.amber;label="*1";lc=C.amber;}
+      if(s===4){fill="#1f2d24";stroke=C.green;label="broken";lc=C.green;}
+      box(ctx,x0+c*(cs+gap),y0+r*(cs+gap),cs,cs,fill,stroke,10);
+      if(label) txt(ctx,label,x0+c*(cs+gap)+cs/2,y0+r*(cs+gap)+cs/2,label.length>2?13:20,lc);
+    }
+    txt(ctx,"S",x0+fr.sc*(cs+gap)+cs/2,y0+fr.sr*(cs+gap)+cs-16,13,C.cyan);
+    txt(ctx,"DEST",x0+fr.dc*(cs+gap)+cs/2,y0+fr.dr*(cs+gap)+18,11,C.purple);
+    txt(ctx,"reached",x0-70,y0+30,12,C.green,"right");
+    txt(ctx,"block",x0-70,y0+60,12,C.red,"right");
+  },
+  kotlin:`<span class="k">val</span> hits = <span class="ty">Array</span>(m) { <span class="ty">IntArray</span>(n) }
+<span class="k">while</span> (queue.isNotEmpty()) {
+    <span class="k">val</span> (r, c) = queue.removeFirst()
+    <span class="k">for</span> ((dy, dx) <span class="k">in</span> dirs) {
+        <span class="k">val</span> nr = r + dy; <span class="k">val</span> nc = c + dx
+        <span class="k">if</span> (nr !in <span class="nu">0</span> until m || nc !in <span class="nu">0</span> until n || reached[nr][nc]) <span class="k">continue</span>
+        <span class="k">if</span> (grid[nr][nc] == <span class="s">'.'</span>) { reached[nr][nc] = <span class="k">true</span>; queue.add(nr <span class="k">to</span> nc) }
+        <span class="k">else if</span> (++hits[nr][nc] &gt;= <span class="nu">2</span>) {   <span class="cm">// unlock on the 2nd REACHABLE side</span>
+            reached[nr][nc] = <span class="k">true</span>; queue.add(nr <span class="k">to</span> nc)
+        }
+    }
+}`,
+  java:`<span class="k">int</span>[][] hits = <span class="k">new int</span>[m][n];
+<span class="k">while</span> (!q.isEmpty()) {
+    <span class="k">int</span>[] cur = q.poll();
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="nu">0</span>; i &lt; <span class="nu">4</span>; i++) {
+        <span class="k">int</span> r = cur[<span class="nu">0</span>] + dy[i], c = cur[<span class="nu">1</span>] + dx[i];
+        <span class="k">if</span> (r &lt; <span class="nu">0</span> || r &gt;= m || c &lt; <span class="nu">0</span> || c &gt;= n || reached[r][c]) <span class="k">continue</span>;
+        <span class="k">if</span> (grid[r][c] == <span class="s">'.'</span>) { reached[r][c] = <span class="k">true</span>; q.add(<span class="k">new int</span>[]{r, c}); }
+        <span class="k">else if</span> (++hits[r][c] &gt;= <span class="nu">2</span>) {      <span class="cm">// monotone unlock — same trick as Kahn's</span>
+            reached[r][c] = <span class="k">true</span>; q.add(<span class="k">new int</span>[]{r, c});
+        }
+    }
+}`
+});
+
+/* ---------- 3 · Sorting 2D (target-round sample) ---------- */
+PATTERNS.push({
+  id:"sort2d", name:"Sorting 2D", d:"sample · k-way merge",
+  build(){
+    const m=[[10,20,30],[12,22,32],[15,25,35]];
+    const cur=[0,0,0], out=[], f=[];
+    const snap=(say,pick=-1)=>f.push({m,cur:[...cur],out:[...out],pick,say});
+    snap("Rows are sorted, columns are sorted. Treat each <b>row as a sorted list</b> and do a k-way merge: a min-heap holds one cursor per row.");
+    while(out.length<9){
+      let best=-1,bv=Infinity;
+      for(let r=0;r<3;r++) if(cur[r]<3 && m[r][cur[r]]<bv){bv=m[r][cur[r]];best=r;}
+      snap(`Heads are ${cur.map((c,r)=>c<3?m[r][c]:"—").join(", ")}. The smallest is <b>${bv}</b> (row ${best+1}) — pop it.`,best);
+      out.push(bv); cur[best]++;
+      snap(`Emit ${bv}; advance row ${best+1}'s cursor. Output so far: [${out.join(", ")}].`);
+    }
+    snap("All cursors exhausted. <b>O(n² log n) time — provably optimal — and O(n) heap space</b>, which is the real win over flatten-and-sort's O(n²) space. Say the space argument, not a false speed claim.");
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"k-way merge: one cursor per sorted row, min-heap picks the smallest head");
+    const cs=64,gap=8;
+    for(let r=0;r<3;r++)for(let c=0;c<3;c++){
+      const x=120+c*(cs+gap), y=90+r*(cs+gap);
+      const used=c<fr.cur[r];
+      const isHead=c===fr.cur[r];
+      const picked=fr.pick===r&&isHead;
+      box(ctx,x,y,cs,cs, used?"#10151b":picked?"#2a2438":isHead?"#1b242d":C.cell,
+          picked?C.purple:isHead?C.cyan:used?"#232a33":C.line,8);
+      txt(ctx,String(fr.m[r][c]),x+cs/2,y+cs/2,15,used?C.faint:picked?C.purple:isHead?C.cyan:C.ink);
+    }
+    txt(ctx,"rows = sorted lists",228,66,12,C.faint);
+    txt(ctx,"output",700,66,12,C.faint);
+    fr.out.forEach((v,i)=>{
+      const x=560+(i%5)*(cs+6), y=90+Math.floor(i/5)*(cs+6);
+      box(ctx,x,y,cs,52,"#1f2d24",C.green,8);
+      txt(ctx,String(v),x+cs/2,y+26,14,C.green);
+    });
+  },
+  kotlin:`<span class="k">val</span> heap = <span class="ty">PriorityQueue</span>&lt;<span class="ty">Triple</span>&lt;<span class="ty">Int</span>,<span class="ty">Int</span>,<span class="ty">Int</span>&gt;&gt;(compareBy { it.first })
+<span class="k">for</span> (r <span class="k">in</span> <span class="nu">0</span> until n) heap.add(<span class="ty">Triple</span>(m[r][<span class="nu">0</span>], r, <span class="nu">0</span>))   <span class="cm">// (value, row, col)</span>
+<span class="k">while</span> (heap.isNotEmpty()) {
+    <span class="k">val</span> (v, r, c) = heap.poll()
+    out += v
+    <span class="k">if</span> (c + <span class="nu">1</span> &lt; n) heap.add(<span class="ty">Triple</span>(m[r][c + <span class="nu">1</span>], r, c + <span class="nu">1</span>))
+}`,
+  java:`<span class="ty">PriorityQueue</span>&lt;<span class="k">int</span>[]&gt; heap =                    <span class="cm">// {value, row, col}</span>
+    <span class="k">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;(<span class="ty">Comparator</span>.comparingInt(e -&gt; e[<span class="nu">0</span>]));
+<span class="k">for</span> (<span class="k">int</span> r = <span class="nu">0</span>; r &lt; n; r++) heap.add(<span class="k">new int</span>[]{m[r][<span class="nu">0</span>], r, <span class="nu">0</span>});
+<span class="k">while</span> (!heap.isEmpty()) {
+    <span class="k">int</span>[] e = heap.poll();
+    out[k++] = e[<span class="nu">0</span>];
+    <span class="k">if</span> (e[<span class="nu">2</span>] + <span class="nu">1</span> &lt; n) heap.add(<span class="k">new int</span>[]{m[e[<span class="nu">1</span>]][e[<span class="nu">2</span>]+<span class="nu">1</span>], e[<span class="nu">1</span>], e[<span class="nu">2</span>]+<span class="nu">1</span>});
+}`
+});
+
+/* ---------- 4 · Sliding window ---------- */
+PATTERNS.push({
+  id:"window", name:"Longest Substring", d:"ours · sliding window",
+  build(){
+    const s="abcabcbb"; const f=[]; const last=new Map();
+    let left=0,best=0,bestL=0,bestR=-1;
+    f.push({s,left:0,right:-1,best:0,bestL:0,bestR:-1,say:"<b>\"abcabcbb\"</b> — longest substring without repeating characters. Grow the right edge; when a repeat lands inside the window, jump the left edge past its previous position."});
+    for(let right=0;right<s.length;right++){
+      const ch=s[right];
+      let jumped=false;
+      if(last.has(ch)&&last.get(ch)>=left){ left=last.get(ch)+1; jumped=true; }
+      last.set(ch,right);
+      if(right-left+1>best){ best=right-left+1; bestL=left; bestR=right; }
+      f.push({s,left,right,best,bestL,bestR,
+        say: jumped
+          ? `'${ch}' repeats inside the window — <b>jump</b> left past its last occurrence, straight to ${left}. Never step one at a time.`
+          : `Extend right to include '${ch}'. Window [${left}..${right}] length ${right-left+1}${right-left+1===best?" — new best":""}.`});
+    }
+    f.push({s,left,right:s.length-1,best,bestL,bestR,
+      say:`Answer: <b>${best}</b> ("${s.slice(bestL,bestR+1)}"). One pass, each pointer only moves forward — O(n). The phrase “longest substring with…” should trigger this pattern instantly.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"grow the right edge · jump the left past repeats");
+    const chars=fr.s.split("");
+    const hi={};
+    for(let i=0;i<chars.length;i++){
+      if(fr.right>=0&&i>=fr.left&&i<=fr.right) hi[i]={fill:"#26313d",stroke:C.cyan};
+      if(i>=fr.bestL&&i<=fr.bestR&&fr.best>0) hi[i]={...(hi[i]||{}),stroke:C.green};
+    }
+    const g=cells(ctx,chars,190,150,0,80,{hi}); g.y=236;
+    if(fr.right>=0) pointer(ctx,g,fr.right,"right",C.cyan,0);
+    pointer(ctx,g,fr.left,"left",C.amber,1);
+    txt(ctx,"best = "+fr.best,500,330,20,C.green);
+  },
+  kotlin:`<span class="k">val</span> last = <span class="ty">HashMap</span>&lt;<span class="ty">Char</span>, <span class="ty">Int</span>&gt;()
+<span class="k">var</span> best = <span class="nu">0</span>; <span class="k">var</span> left = <span class="nu">0</span>
+<span class="k">for</span> (right <span class="k">in</span> s.indices) {
+    last[s[right]]?.let { <span class="k">if</span> (it &gt;= left) left = it + <span class="nu">1</span> }  <span class="cm">// jump, don't creep</span>
+    last[s[right]] = right
+    best = maxOf(best, right - left + <span class="nu">1</span>)
+}`,
+  java:`<span class="ty">Map</span>&lt;<span class="ty">Character</span>, <span class="ty">Integer</span>&gt; last = <span class="k">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+<span class="k">int</span> best = <span class="nu">0</span>, left = <span class="nu">0</span>;
+<span class="k">for</span> (<span class="k">int</span> right = <span class="nu">0</span>; right &lt; s.length(); right++) {
+    <span class="k">char</span> c = s.charAt(right);
+    <span class="ty">Integer</span> prev = last.get(c);
+    <span class="k">if</span> (prev != <span class="k">null</span> &amp;&amp; prev &gt;= left) left = prev + <span class="nu">1</span>;
+    last.put(c, right);
+    best = <span class="ty">Math</span>.max(best, right - left + <span class="nu">1</span>);
+}`
+});
+
+/* ---------- 5 · Coin change DP ---------- */
+PATTERNS.push({
+  id:"coin", name:"Coin Change", d:"ours · DP over amount",
+  build(){
+    const coins=[1,2,5], amount=6, INF=amount+1;
+    const dp=new Array(amount+1).fill(INF); dp[0]=0;
+    const f=[];
+    f.push({dp:[...dp],a:-1,c:-1,say:"<b>coins [1,2,5], amount 6.</b> State first, out loud: <b>dp[a] = fewest coins to make exactly a.</b> Base: dp[0]=0. Fill ascending because coins are reusable."});
+    for(let a=1;a<=amount;a++){
+      for(const c of coins){
+        if(c<=a && dp[a-c]+1<dp[a]){
+          const old=dp[a]; dp[a]=dp[a-c]+1;
+          f.push({dp:[...dp],a,c,say:`dp[${a}]: try coin ${c} → dp[${a-c}] + 1 = <b>${dp[a]}</b>${old<INF?` (beats ${old})`:""}.`});
+        }
+      }
+      f.push({dp:[...dp],a,c:-1,say:`dp[${a}] settles at <b>${dp[a]>=INF?"∞":dp[a]}</b>.`});
+    }
+    f.push({dp:[...dp],a:amount,c:-1,say:`Answer: dp[6] = <b>${dp[amount]}</b> (5+1). The recipe every time: state → recurrence → base → order → space. Unbounded coins ⇒ ascending; 0/1 knapsack would iterate capacity <b>descending</b>.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"dp[a] = fewest coins for amount a — fill left to right");
+    const vals=fr.dp.map(v=>v>6?"∞":v);
+    const hi={};
+    if(fr.a>=0) hi[fr.a]={fill:"#2a2438",stroke:C.purple,color:C.purple};
+    if(fr.a>=0&&fr.c>0) hi[fr.a-fr.c]={fill:"#26313d",stroke:C.cyan,color:C.cyan};
+    const g=cells(ctx,vals,150,160,0,80,{hi,labels:[...Array(7).keys()]});
+    if(fr.c>0) txt(ctx,`coin ${fr.c}`,500,300,16,C.cyan);
+    txt(ctx,"amount →",108,286,12,C.faint,"left");
+  },
+  kotlin:`<span class="k">val</span> dp = <span class="ty">IntArray</span>(amount + <span class="nu">1</span>) { amount + <span class="nu">1</span> }   <span class="cm">// sentinel = unreachable</span>
+dp[<span class="nu">0</span>] = <span class="nu">0</span>
+<span class="k">for</span> (a <span class="k">in</span> <span class="nu">1</span>..amount)
+    <span class="k">for</span> (c <span class="k">in</span> coins)
+        <span class="k">if</span> (c &lt;= a) dp[a] = minOf(dp[a], dp[a - c] + <span class="nu">1</span>)
+<span class="k">return if</span> (dp[amount] &gt; amount) -<span class="nu">1</span> <span class="k">else</span> dp[amount]`,
+  java:`<span class="k">int</span>[] dp = <span class="k">new int</span>[amount + <span class="nu">1</span>];
+<span class="ty">Arrays</span>.fill(dp, amount + <span class="nu">1</span>);
+dp[<span class="nu">0</span>] = <span class="nu">0</span>;
+<span class="k">for</span> (<span class="k">int</span> a = <span class="nu">1</span>; a &lt;= amount; a++)
+    <span class="k">for</span> (<span class="k">int</span> c : coins)
+        <span class="k">if</span> (c &lt;= a) dp[a] = <span class="ty">Math</span>.min(dp[a], dp[a - c] + <span class="nu">1</span>);
+<span class="k">return</span> dp[amount] &gt; amount ? -<span class="nu">1</span> : dp[amount];`
+});
+
+/* ---------- 6 · Monotonic stack ---------- */
+PATTERNS.push({
+  id:"mono", name:"Daily Temperatures", d:"ours · monotonic stack",
+  build(){
+    const t=[73,74,75,71,69,72,76]; const f=[];
+    const stack=[]; const ans=new Array(t.length).fill(0);
+    f.push({t,i:-1,stack:[],ans:[...ans],say:"<b>Next warmer day for each temperature.</b> The phrase “next greater element” = <b>monotonic stack</b>: keep indices of a strictly decreasing run; each new value pops everything it beats."});
+    for(let i=0;i<t.length;i++){
+      let popped=[];
+      while(stack.length && t[i]>t[stack[stack.length-1]]){
+        const j=stack.pop(); ans[j]=i-j; popped.push(j);
+        f.push({t,i,stack:[...stack],ans:[...ans],say:`${t[i]} beats ${t[j]} (index ${j}) — pop it, its answer is <b>${i-j}</b> day(s).`});
+      }
+      stack.push(i);
+      if(!popped.length) f.push({t,i,stack:[...stack],ans:[...ans],say:`${t[i]} doesn't beat the stack top — push index ${i}. The stack stays decreasing.`});
+      else f.push({t,i,stack:[...stack],ans:[...ans],say:`Now push index ${i} — the stack is decreasing again.`});
+    }
+    f.push({t,i:t.length-1,stack:[...stack],ans:[...ans],say:`Whatever remains never found a warmer day — answer 0. Each index is pushed and popped <b>at most once</b>, so the whole thing is O(n) despite the nested-looking loop.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"stack of indices, kept decreasing — push once, pop once ⇒ O(n)");
+    const hi={};
+    fr.stack.forEach(j=>hi[j]={fill:"#26313d",stroke:C.cyan});
+    if(fr.i>=0) hi[fr.i]={...(hi[fr.i]||{}),stroke:C.purple,fill:"#2a2438"};
+    const g=cells(ctx,fr.t,150,120,0,70,{hi,labels:fr.ans.map(a=>a||"·")});
+    txt(ctx,"answers",108,226,12,C.faint,"left");
+    txt(ctx,"stack: ["+fr.stack.join(", ")+"]",500,330,17,C.cyan);
+  },
+  kotlin:`<span class="k">val</span> stack = <span class="ty">ArrayDeque</span>&lt;<span class="ty">Int</span>&gt;()          <span class="cm">// indices, temps decreasing</span>
+<span class="k">val</span> ans = <span class="ty">IntArray</span>(t.size)
+<span class="k">for</span> (i <span class="k">in</span> t.indices) {
+    <span class="k">while</span> (stack.isNotEmpty() &amp;&amp; t[i] &gt; t[stack.last()]) {
+        <span class="k">val</span> j = stack.removeLast()
+        ans[j] = i - j
+    }
+    stack.addLast(i)
+}`,
+  java:`<span class="ty">Deque</span>&lt;<span class="ty">Integer</span>&gt; stack = <span class="k">new</span> <span class="ty">ArrayDeque</span>&lt;&gt;();
+<span class="k">int</span>[] ans = <span class="k">new int</span>[t.length];
+<span class="k">for</span> (<span class="k">int</span> i = <span class="nu">0</span>; i &lt; t.length; i++) {
+    <span class="k">while</span> (!stack.isEmpty() &amp;&amp; t[i] &gt; t[stack.peek()]) {
+        <span class="k">int</span> j = stack.pop();
+        ans[j] = i - j;
+    }
+    stack.push(i);
+}`
+});
+
+/* ---------- 7 · Merge intervals ---------- */
+PATTERNS.push({
+  id:"intervals", name:"Merge Intervals", d:"ours · sort by start",
+  build(){
+    const iv=[[1,3],[2,6],[8,10],[15,18]]; const f=[]; const merged=[];
+    f.push({iv,merged:[],idx:-1,say:"<b>[[1,3],[2,6],[8,10],[15,18]]</b>. First move, always: <b>sort by start</b>. (Already sorted here — say it anyway.) Then one pass: extend the last kept interval or start a new one."});
+    for(let i=0;i<iv.length;i++){
+      const cur=iv[i]; const last=merged[merged.length-1];
+      if(last && cur[0]<=last[1]){
+        last[1]=Math.max(last[1],cur[1]);
+        f.push({iv,merged:merged.map(x=>[...x]),idx:i,say:`[${cur}] starts at ${cur[0]} ≤ ${last[0]===cur[0]?"":""}the last end — <b>overlap</b>. Extend to [${last[0]},${last[1]}].`});
+      } else {
+        merged.push([...cur]);
+        f.push({iv,merged:merged.map(x=>[...x]),idx:i,say:`[${cur}] starts after the last end — no overlap, keep it as a new interval.`});
+      }
+    }
+    f.push({iv,merged:merged.map(x=>[...x]),idx:-1,say:`Result: ${JSON.stringify(merged)}. O(n log n) for the sort, O(n) after. Clarify in the room whether touching intervals like [1,4][4,5] count as overlapping — it changes ≤ vs &lt;.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"sort by start, then extend-or-append in one pass");
+    const X=s=>120+s*44;
+    // axis
+    ctx.strokeStyle=C.line; ctx.beginPath(); ctx.moveTo(X(0),150); ctx.lineTo(X(19),150); ctx.stroke();
+    for(let s=0;s<=19;s++){ txt(ctx,String(s),X(s),168,9,C.faint); }
+    fr.iv.forEach((v,i)=>{
+      const y=195+i*30;
+      box(ctx,X(v[0]),y,X(v[1])-X(v[0]),20, i===fr.idx?"#2a2438":C.cell, i===fr.idx?C.purple:C.line,6);
+      txt(ctx,`[${v}]`,X(v[1])+34,y+10,11,i===fr.idx?C.purple:C.mut,"left");
+    });
+    fr.merged.forEach(v=>{
+      box(ctx,X(v[0]),108,X(v[1])-X(v[0]),22,"#1f2d24",C.green,6);
+    });
+    txt(ctx,"merged",108,119,12,C.green,"right");
+  },
+  kotlin:`<span class="k">val</span> sorted = intervals.sortedBy { it[<span class="nu">0</span>] }        <span class="cm">// ALWAYS sort by start first</span>
+<span class="k">val</span> out = <span class="k">mutableListOf</span>&lt;<span class="ty">IntArray</span>&gt;()
+<span class="k">for</span> (cur <span class="k">in</span> sorted) {
+    <span class="k">val</span> last = out.lastOrNull()
+    <span class="k">if</span> (last != <span class="k">null</span> &amp;&amp; cur[<span class="nu">0</span>] &lt;= last[<span class="nu">1</span>])
+        last[<span class="nu">1</span>] = maxOf(last[<span class="nu">1</span>], cur[<span class="nu">1</span>])
+    <span class="k">else</span> out.add(cur.copyOf())
+}`,
+  java:`<span class="ty">Arrays</span>.sort(intervals, <span class="ty">Comparator</span>.comparingInt(a -&gt; a[<span class="nu">0</span>]));
+<span class="ty">List</span>&lt;<span class="k">int</span>[]&gt; out = <span class="k">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+<span class="k">for</span> (<span class="k">int</span>[] cur : intervals) {
+    <span class="k">int</span>[] last = out.isEmpty() ? <span class="k">null</span> : out.get(out.size() - <span class="nu">1</span>);
+    <span class="k">if</span> (last != <span class="k">null</span> &amp;&amp; cur[<span class="nu">0</span>] &lt;= last[<span class="nu">1</span>])
+        last[<span class="nu">1</span>] = <span class="ty">Math</span>.max(last[<span class="nu">1</span>], cur[<span class="nu">1</span>]);
+    <span class="k">else</span> out.add(cur.clone());
+}`
+});
+
+/* ---------- 8 · Kahn's algorithm ---------- */
+PATTERNS.push({
+  id:"kahn", name:"Course Schedule", d:"ours · Kahn / in-degree",
+  build(){
+    // 5 nodes: 0->1,0->2,1->3,2->3,3->4
+    const n=5, edges=[[0,1],[0,2],[1,3],[2,3],[3,4]];
+    const adj=Array.from({length:n},()=>[]); const deg=new Array(n).fill(0);
+    edges.forEach(([a,b])=>{adj[a].push(b);deg[b]++;});
+    const f=[]; const done=[]; const q=[];
+    const snap=say=>f.push({deg:[...deg],q:[...q],done:[...done],edges,say});
+    snap("<b>5 courses, prerequisites as arrows.</b> Kahn's algorithm: count incoming edges (in-degree). Anything at 0 can be taken now. The same unlock-on-threshold trick as the pickaxe grid.");
+    for(let i=0;i<n;i++) if(deg[i]===0) q.push(i);
+    snap(`In-degrees: [${deg.join(", ")}]. Only course 0 is free — enqueue it.`);
+    while(q.length){
+      const cur=q.shift(); done.push(cur);
+      snap(`Take course <b>${cur}</b>. Remove its outgoing edges.`);
+      for(const nx of adj[cur]){
+        deg[nx]--;
+        if(deg[nx]===0){ q.push(nx); snap(`Course ${nx} drops to in-degree 0 — <b>unlocked</b>, enqueue.`); }
+        else snap(`Course ${nx} drops to in-degree ${deg[nx]} — still blocked.`);
+      }
+    }
+    snap(`Emitted ${done.length}/${n} courses: [${done.join(", ")}]. All of them ⇒ no cycle. <b>Fewer than n emitted is exactly how you detect a cycle</b> — that sentence is the answer to Course Schedule.`);
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"in-degree 0 = takeable now · emitted < n ⇒ cycle");
+    const pos=[[220,150],[420,90],[420,220],[620,150],[820,150]];
+    // edges
+    fr.edges.forEach(([a,b])=>{
+      const [x1,y1]=pos[a],[x2,y2]=pos[b];
+      const ang=Math.atan2(y2-y1,x2-x1);
+      ctx.strokeStyle=fr.done.includes(a)?"#2e3b34":C.line; ctx.lineWidth=1.6;
+      ctx.beginPath(); ctx.moveTo(x1+30*Math.cos(ang),y1+30*Math.sin(ang));
+      ctx.lineTo(x2-34*Math.cos(ang),y2-34*Math.sin(ang)); ctx.stroke();
+      const ax=x2-34*Math.cos(ang), ay=y2-34*Math.sin(ang);
+      ctx.beginPath(); ctx.moveTo(ax,ay);
+      ctx.lineTo(ax-10*Math.cos(ang-0.4),ay-10*Math.sin(ang-0.4));
+      ctx.lineTo(ax-10*Math.cos(ang+0.4),ay-10*Math.sin(ang+0.4));
+      ctx.closePath(); ctx.fillStyle=fr.done.includes(a)?"#2e3b34":C.line; ctx.fill();
+    });
+    // nodes
+    for(let i=0;i<5;i++){
+      const [x,y]=pos[i];
+      const isDone=fr.done.includes(i), inQ=fr.q.includes(i);
+      ctx.beginPath(); ctx.arc(x,y,26,0,7);
+      ctx.fillStyle=isDone?"#1f2d24":inQ?"#26313d":C.cell; ctx.fill();
+      ctx.strokeStyle=isDone?C.green:inQ?C.cyan:C.line; ctx.lineWidth=2; ctx.stroke();
+      txt(ctx,String(i),x,y,16,isDone?C.green:inQ?C.cyan:C.ink);
+      if(!isDone) txt(ctx,"in:"+fr.deg[i],x,y+42,11,fr.deg[i]===0?C.cyan:C.amber);
+    }
+    txt(ctx,"order: ["+fr.done.join(", ")+"]",500,330,17,C.green);
+    txt(ctx,"queue: ["+fr.q.join(", ")+"]",500,362,14,C.cyan);
+  },
+  kotlin:`<span class="k">val</span> deg = <span class="ty">IntArray</span>(n)
+prereq.forEach { (course, pre) -&gt; adj[pre].add(course); deg[course]++ }
+<span class="k">val</span> q = <span class="ty">ArrayDeque</span>((<span class="nu">0</span> until n).filter { deg[it] == <span class="nu">0</span> })
+<span class="k">var</span> done = <span class="nu">0</span>
+<span class="k">while</span> (q.isNotEmpty()) {
+    <span class="k">val</span> cur = q.removeFirst(); done++
+    <span class="k">for</span> (nx <span class="k">in</span> adj[cur]) <span class="k">if</span> (--deg[nx] == <span class="nu">0</span>) q.add(nx)
+}
+<span class="k">return</span> done == n            <span class="cm">// fewer ⇒ a cycle exists</span>`,
+  java:`<span class="k">int</span>[] deg = <span class="k">new int</span>[n];
+<span class="k">for</span> (<span class="k">int</span>[] p : prereq) { adj.get(p[<span class="nu">1</span>]).add(p[<span class="nu">0</span>]); deg[p[<span class="nu">0</span>]]++; }
+<span class="ty">Deque</span>&lt;<span class="ty">Integer</span>&gt; q = <span class="k">new</span> <span class="ty">ArrayDeque</span>&lt;&gt;();
+<span class="k">for</span> (<span class="k">int</span> i = <span class="nu">0</span>; i &lt; n; i++) <span class="k">if</span> (deg[i] == <span class="nu">0</span>) q.add(i);
+<span class="k">int</span> done = <span class="nu">0</span>;
+<span class="k">while</span> (!q.isEmpty()) {
+    <span class="k">int</span> cur = q.poll(); done++;
+    <span class="k">for</span> (<span class="k">int</span> nx : adj.get(cur)) <span class="k">if</span> (--deg[nx] == <span class="nu">0</span>) q.add(nx);
+}
+<span class="k">return</span> done == n;`
+});
+
+/* ============================== extra renderers ============================== */
+function bars(ctx,vals,x,y,w,maxH,opts={}){
+  const {hi={},gap=8}=opts;
+  const bw=Math.min(60,(w-(vals.length-1)*gap)/vals.length);
+  const mx=Math.max(...vals);
+  vals.forEach((v,i)=>{
+    const h=Math.max(10,(v/mx)*maxH), bx=x+i*(bw+gap);
+    const st=hi[i]||{};
+    box(ctx,bx,y+maxH-h,bw,h, st.fill||C.cell, st.stroke||C.line,5);
+    txt(ctx,String(v),bx+bw/2,y+maxH+16,12,st.color||C.mut);
+  });
+  return {bw,gap,x0:x,yTop:y};
+}
+function chain(ctx,vals,links,x,y,opts={}){
+  const {hi={},labels={}}=opts, bw=66,gap=44;
+  vals.forEach((v,i)=>{
+    const bx=x+i*(bw+gap), st=hi[i]||{};
+    box(ctx,bx,y,bw,52, st.fill||C.cell, st.stroke||C.line,9);
+    txt(ctx,String(v),bx+bw/2,y+26,15,st.color||C.ink);
+    if(labels[i]) txt(ctx,labels[i],bx+bw/2,y-16,11,st.stroke||C.cyan);
+  });
+  links.forEach((to,i)=>{
+    if(to<0||to==null) return;
+    const fx=x+i*(bw+gap), tx=x+to*(bw+gap);
+    const y0=y+26, fwd=to>i;
+    const sx=fwd?fx+bw:fx, ex=fwd?tx:tx+bw;
+    ctx.strokeStyle=C.faint; ctx.lineWidth=1.6;
+    ctx.beginPath();
+    if(Math.abs(to-i)===1){ ctx.moveTo(sx,y0); ctx.lineTo(ex,y0); }
+    else { ctx.moveTo(sx,y0); ctx.bezierCurveTo(sx+(fwd?40:-40),y0-64,ex+(fwd?-40:40),y0-64,ex,y0); }
+    ctx.stroke();
+    const dir=fwd?1:-1;
+    ctx.beginPath(); ctx.moveTo(ex,y0); ctx.lineTo(ex-9*dir,y0-5); ctx.lineTo(ex-9*dir,y0+5);
+    ctx.closePath(); ctx.fillStyle=C.faint; ctx.fill();
+  });
+}
+const TREE_POS=[[500,80],[320,170],[680,170],[230,265],[410,265],[590,265],[770,265]];
+function tree(ctx,vals,opts={}){
+  const {hi={},edges=true}=opts;
+  if(edges) [[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]].forEach(([a,b])=>{
+    if(vals[a]==null||vals[b]==null) return;
+    ctx.strokeStyle=C.line; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(...TREE_POS[a]); ctx.lineTo(...TREE_POS[b]); ctx.stroke();
+  });
+  vals.forEach((v,i)=>{
+    if(v==null) return;
+    const [x,y]=TREE_POS[i], st=hi[i]||{};
+    ctx.beginPath(); ctx.arc(x,y,26,0,7);
+    ctx.fillStyle=st.fill||C.cell; ctx.fill();
+    ctx.strokeStyle=st.stroke||C.line; ctx.lineWidth=2; ctx.stroke();
+    txt(ctx,String(v),x,y,15,st.color||C.ink);
+  });
+}
+function storyRender(title){
+  return function(ctx,fr){
+    tagline(ctx,title);
+    txt(ctx,fr.head||title,500,140,24,C.ink,"center","-apple-system,Segoe UI,Roboto,sans-serif");
+    (fr.lines||[]).forEach((l,i)=>txt(ctx,l,500,200+i*34,15,i===fr.hot?C.cyan:C.mut,"center","-apple-system,Segoe UI,Roboto,sans-serif"));
+    txt(ctx,"(concept walkthrough — read the narration below)",500,420,11,C.faint);
+  };
+}
+function story(id,name,d,title,steps,kotlin,java){
+  return {id,name,d,
+    build(){ return steps.map((s,i)=>({say:s.say,head:s.head||name,lines:steps.map(x=>x.head||"").filter(Boolean).length?[]:[],hot:i})); },
+    render:storyRender(title), kotlin, java};
+}
+
+/* ============================== arrays & hashing ============================== */
+PATTERNS.push({
+  id:"twosum", name:"Two Sum", d:"arrays · hash map",
+  build(){
+    const a=[2,7,11,15],t=9,f=[],seen={};
+    f.push({vals:a,hi:{},seen:{},say:"<b>[2,7,11,15], target 9.</b> One pass with a map of value→index. For each element ask: <b>have I already seen its complement?</b>"});
+    for(let i=0;i<a.length;i++){
+      const need=t-a[i];
+      if(seen[need]!=null){
+        f.push({vals:a,hi:{[seen[need]]:{fill:"#1f2d24",stroke:C.green,color:C.green},[i]:{fill:"#1f2d24",stroke:C.green,color:C.green}},seen:{...seen},
+          say:`At ${a[i]} the complement is ${need} — and the map says index ${seen[need]} has it. Answer: <b>[${seen[need]}, ${i}]</b>. O(n) time, O(n) space — the map buys speed with memory.`});
+        break;
+      }
+      seen[a[i]]=i;
+      f.push({vals:a,hi:{[i]:{fill:"#26313d",stroke:C.cyan}},seen:{...seen},
+        say:`${a[i]}: complement ${need} not seen yet. Record ${a[i]}→${i} and move on.`});
+    }
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"one pass: check the complement, then record yourself");
+    cells(ctx,fr.vals,300,150,0,80,{hi:fr.hi});
+    txt(ctx,"seen: "+JSON.stringify(fr.seen),500,310,15,C.cyan);
+  },
+  kotlin:`<span class="k">val</span> seen = <span class="ty">HashMap</span>&lt;<span class="ty">Int</span>,<span class="ty">Int</span>&gt;()
+<span class="k">for</span> ((i, v) <span class="k">in</span> nums.withIndex()) {
+    seen[target - v]?.let { <span class="k">return</span> intArrayOf(it, i) }
+    seen[v] = i
+}`,
+  java:`<span class="ty">Map</span>&lt;<span class="ty">Integer</span>,<span class="ty">Integer</span>&gt; seen = <span class="k">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+<span class="k">for</span> (<span class="k">int</span> i = <span class="nu">0</span>; i &lt; nums.length; i++) {
+    <span class="ty">Integer</span> j = seen.get(target - nums[i]);
+    <span class="k">if</span> (j != <span class="k">null</span>) <span class="k">return new int</span>[]{j, i};
+    seen.put(nums[i], i);
+}`
+});
+
+PATTERNS.push({
+  id:"dup", name:"Contains Duplicate", d:"arrays · hash set",
+  build(){
+    const a=[1,2,3,1],f=[];const set=new Set();
+    f.push({vals:a,hi:{},set:[],say:"<b>[1,2,3,1].</b> A HashSet refuses to store the same value twice — <code>add()</code> returning false IS the answer."});
+    for(let i=0;i<a.length;i++){
+      if(set.has(a[i])){f.push({vals:a,hi:{[i]:{fill:"#2a1f26",stroke:C.red,color:C.red}},set:[...set],
+        say:`add(${a[i]}) returns <b>false</b> — already present. Duplicate found, return true. O(n)/O(n); the O(1)-space alternative is sort-then-scan at O(n log n).`});break;}
+      set.add(a[i]);
+      f.push({vals:a,hi:{[i]:{fill:"#26313d",stroke:C.cyan}},set:[...set],say:`add(${a[i]}) returns true — new value, keep going.`});
+    }
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"add() returning false is the whole algorithm");
+    cells(ctx,fr.vals,320,150,0,80,{hi:fr.hi});
+    txt(ctx,"set: {"+fr.set.join(", ")+"}",500,310,15,C.cyan);
+  },
+  kotlin:`<span class="k">val</span> seen = <span class="ty">HashSet</span>&lt;<span class="ty">Int</span>&gt;()
+<span class="k">for</span> (x <span class="k">in</span> nums) <span class="k">if</span> (!seen.add(x)) <span class="k">return true</span>
+<span class="k">return false</span>`,
+  java:`<span class="ty">Set</span>&lt;<span class="ty">Integer</span>&gt; seen = <span class="k">new</span> <span class="ty">HashSet</span>&lt;&gt;();
+<span class="k">for</span> (<span class="k">int</span> x : nums) <span class="k">if</span> (!seen.add(x)) <span class="k">return true</span>;
+<span class="k">return false</span>;`
+});
+
+PATTERNS.push({
+  id:"anagram", name:"Valid Anagram", d:"strings · count array",
+  build(){
+    const s="cat",t="tac",f=[];const cnt={c:0,a:0,t:0};
+    const K=Object.keys(cnt);
+    f.push({k:K,vals:K.map(k=>cnt[k]),hi:{},say:"<b>\"cat\" vs \"tac\".</b> One 26-slot count array beats a HashMap: ++ for every char of s, -- for every char of t, then check all zeros."});
+    for(const ch of s){cnt[ch]++;f.push({k:K,vals:K.map(k=>cnt[k]),hi:{[K.indexOf(ch)]:{stroke:C.green,color:C.green}},say:`'${ch}' from s → count[${ch}]++ = ${cnt[ch]}.`});}
+    for(const ch of t){cnt[ch]--;f.push({k:K,vals:K.map(k=>cnt[k]),hi:{[K.indexOf(ch)]:{stroke:C.amber,color:C.amber}},say:`'${ch}' from t → count[${ch}]-- = ${cnt[ch]}.`});}
+    f.push({k:K,vals:K.map(k=>cnt[k]),hi:Object.fromEntries(K.map((_,i)=>[i,{stroke:C.green}])),say:"All counts are zero → same letters, same frequencies → <b>anagram</b>. O(n) time, O(1) space (26 slots). Length check first is the cheap early exit."});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"++ for s, -- for t, all zeros = anagram");
+    cells(ctx,fr.vals,380,150,0,80,{hi:fr.hi,labels:fr.k});
+  },
+  kotlin:`<span class="k">if</span> (s.length != t.length) <span class="k">return false</span>
+<span class="k">val</span> count = <span class="ty">IntArray</span>(<span class="nu">26</span>)
+<span class="k">for</span> (i <span class="k">in</span> s.indices) { count[s[i]-<span class="s">'a'</span>]++; count[t[i]-<span class="s">'a'</span>]-- }
+<span class="k">return</span> count.all { it == <span class="nu">0</span> }`,
+  java:`<span class="k">if</span> (s.length() != t.length()) <span class="k">return false</span>;
+<span class="k">int</span>[] count = <span class="k">new int</span>[<span class="nu">26</span>];
+<span class="k">for</span> (<span class="k">int</span> i = <span class="nu">0</span>; i &lt; s.length(); i++) {
+    count[s.charAt(i)-<span class="s">'a'</span>]++;
+    count[t.charAt(i)-<span class="s">'a'</span>]--;
+}
+<span class="k">for</span> (<span class="k">int</span> c : count) <span class="k">if</span> (c != <span class="nu">0</span>) <span class="k">return false</span>;
+<span class="k">return true</span>;`
+});
+
+PATTERNS.push({
+  id:"pal", name:"Valid Palindrome", d:"strings · two pointers",
+  build(){
+    const s="abcba".split(""),f=[];let lo=0,hi=s.length-1;
+    f.push({s,lo,hi,say:"<b>Two pointers from both ends.</b> Compare, move inward. (In the LeetCode version you also skip non-alphanumerics and lowercase first — say that.)"});
+    while(lo<hi){
+      f.push({s,lo,hi,say:`'${s[lo]}' vs '${s[hi]}' — equal, move both inward.`});
+      lo++;hi--;
+    }
+    f.push({s,lo,hi,say:"Pointers met without a mismatch → <b>palindrome</b>. O(n) time, O(1) space — no reversed copy needed."});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"compare ends, walk inward — O(1) space");
+    const g=cells(ctx,fr.s,330,150,0,80,{hi:{[fr.lo]:{stroke:C.cyan},[fr.hi]:{stroke:C.amber}}});g.y=236;
+    pointer(ctx,g,fr.lo,"lo",C.cyan,0);
+    if(fr.hi!==fr.lo) pointer(ctx,g,fr.hi,"hi",C.amber,1);
+  },
+  kotlin:`<span class="k">var</span> lo = <span class="nu">0</span>; <span class="k">var</span> hi = s.lastIndex
+<span class="k">while</span> (lo &lt; hi) {
+    <span class="k">if</span> (s[lo] != s[hi]) <span class="k">return false</span>
+    lo++; hi--
+}
+<span class="k">return true</span>`,
+  java:`<span class="k">int</span> lo = <span class="nu">0</span>, hi = s.length() - <span class="nu">1</span>;
+<span class="k">while</span> (lo &lt; hi) {
+    <span class="k">if</span> (s.charAt(lo) != s.charAt(hi)) <span class="k">return false</span>;
+    lo++; hi--;
+}
+<span class="k">return true</span>;`
+});
+
+PATTERNS.push({
+  id:"water", name:"Container With Most Water", d:"arrays · two pointers",
+  build(){
+    const h=[1,8,6,2,5,4,8,3,7],f=[];let lo=0,hi=h.length-1,best=0;
+    f.push({h,lo,hi,best,say:"<b>Widest container first</b>, then shrink. Key claim: moving the <b>taller</b> wall inward can only lose width without gaining height — so always move the shorter one."});
+    while(lo<hi){
+      const area=(hi-lo)*Math.min(h[lo],h[hi]);
+      if(area>best)best=area;
+      const moveLo=h[lo]<h[hi];
+      f.push({h,lo,hi,best,say:`Area = ${hi-lo} × min(${h[lo]},${h[hi]}) = <b>${area}</b>${area===best?" (best so far)":""}. ${moveLo?`Left wall ${h[lo]} is shorter — move lo.`:`Right wall ${h[hi]} is shorter — move hi.`}`});
+      if(moveLo)lo++;else hi--;
+    }
+    f.push({h,lo,hi,best,say:`Pointers met. Best area: <b>${best}</b>. O(n) — each pointer only ever moves inward.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"always move the shorter wall");
+    const g=bars(ctx,fr.h,220,90,560,220,{hi:{[fr.lo]:{fill:"#26313d",stroke:C.cyan},[fr.hi]:{fill:"#2a2a1f",stroke:C.amber}}});
+    txt(ctx,"best = "+fr.best,500,370,18,C.green);
+  },
+  kotlin:`<span class="k">var</span> lo = <span class="nu">0</span>; <span class="k">var</span> hi = height.lastIndex; <span class="k">var</span> best = <span class="nu">0</span>
+<span class="k">while</span> (lo &lt; hi) {
+    best = maxOf(best, (hi - lo) * minOf(height[lo], height[hi]))
+    <span class="k">if</span> (height[lo] &lt; height[hi]) lo++ <span class="k">else</span> hi--
+}`,
+  java:`<span class="k">int</span> lo = <span class="nu">0</span>, hi = height.length - <span class="nu">1</span>, best = <span class="nu">0</span>;
+<span class="k">while</span> (lo &lt; hi) {
+    best = <span class="ty">Math</span>.max(best, (hi - lo) * <span class="ty">Math</span>.min(height[lo], height[hi]));
+    <span class="k">if</span> (height[lo] &lt; height[hi]) lo++; <span class="k">else</span> hi--;
+}`
+});
+
+PATTERNS.push({
+  id:"threesum", name:"3Sum", d:"arrays · sort + pointers",
+  build(){
+    const a=[-4,-1,-1,0,1,2],f=[],out=[];
+    f.push({a,i:-1,lo:-1,hi:-1,out:[],say:"<b>Sorted: [-4,-1,-1,0,1,2].</b> Fix an anchor i, then two-pointer the rest for pairs summing to −a[i]. Skip duplicate anchors and duplicate pairs."});
+    for(let i=0;i<a.length-2;i++){
+      if(i>0&&a[i]===a[i-1]){f.push({a,i,lo:-1,hi:-1,out:out.map(x=>[...x]),say:`Anchor ${a[i]} repeats the previous anchor — skip it, or you emit duplicate triples.`});continue;}
+      let lo=i+1,hi=a.length-1;
+      while(lo<hi){
+        const s=a[i]+a[lo]+a[hi];
+        if(s<0){f.push({a,i,lo,hi,out:out.map(x=>[...x]),say:`${a[i]}+${a[lo]}+${a[hi]} = ${s} &lt; 0 — need bigger, move lo.`});lo++;}
+        else if(s>0){f.push({a,i,lo,hi,out:out.map(x=>[...x]),say:`${a[i]}+${a[lo]}+${a[hi]} = ${s} &gt; 0 — need smaller, move hi.`});hi--;}
+        else{out.push([a[i],a[lo],a[hi]]);
+          f.push({a,i,lo,hi,out:out.map(x=>[...x]),say:`${a[i]}+${a[lo]}+${a[hi]} = 0 — <b>triple found</b>. Move both, skipping duplicates.`});
+          while(lo<hi&&a[lo]===a[lo+1])lo++;while(lo<hi&&a[hi]===a[hi-1])hi--;lo++;hi--;}
+      }
+    }
+    f.push({a,i:-1,lo:-1,hi:-1,out:out.map(x=>[...x]),say:`Result: ${JSON.stringify(out)}. Sort O(n log n) + anchors×two-pointer O(n²). The duplicate-skipping is where interviews are lost.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"anchor + two pointers on a sorted array");
+    const hi={};if(fr.i>=0)hi[fr.i]={fill:"#2a2438",stroke:C.purple,color:C.purple};
+    if(fr.lo>=0)hi[fr.lo]={fill:"#26313d",stroke:C.cyan};if(fr.hi>=0)hi[fr.hi]={fill:"#2a2a1f",stroke:C.amber};
+    cells(ctx,fr.a,280,140,0,76,{hi});
+    txt(ctx,"found: "+JSON.stringify(fr.out),500,300,14,C.green);
+  },
+  kotlin:`nums.sort()
+<span class="k">for</span> (i <span class="k">in</span> <span class="nu">0</span>..nums.size-<span class="nu">3</span>) {
+    <span class="k">if</span> (i &gt; <span class="nu">0</span> &amp;&amp; nums[i] == nums[i-<span class="nu">1</span>]) <span class="k">continue</span>   <span class="cm">// skip dup anchors</span>
+    <span class="k">var</span> lo = i+<span class="nu">1</span>; <span class="k">var</span> hi = nums.lastIndex
+    <span class="k">while</span> (lo &lt; hi) {
+        <span class="k">val</span> s = nums[i] + nums[lo] + nums[hi]
+        <span class="k">when</span> {
+            s &lt; <span class="nu">0</span> -&gt; lo++
+            s &gt; <span class="nu">0</span> -&gt; hi--
+            <span class="k">else</span> -&gt; { add(triple); <span class="cm">/* skip dups */</span> lo++; hi-- }
+        }
+    }
+}`,
+  java:`<span class="ty">Arrays</span>.sort(nums);
+<span class="k">for</span> (<span class="k">int</span> i = <span class="nu">0</span>; i &lt; nums.length - <span class="nu">2</span>; i++) {
+    <span class="k">if</span> (i &gt; <span class="nu">0</span> &amp;&amp; nums[i] == nums[i-<span class="nu">1</span>]) <span class="k">continue</span>;
+    <span class="k">int</span> lo = i + <span class="nu">1</span>, hi = nums.length - <span class="nu">1</span>;
+    <span class="k">while</span> (lo &lt; hi) {
+        <span class="k">int</span> s = nums[i] + nums[lo] + nums[hi];
+        <span class="k">if</span> (s &lt; <span class="nu">0</span>) lo++;
+        <span class="k">else if</span> (s &gt; <span class="nu">0</span>) hi--;
+        <span class="k">else</span> { add(nums[i], nums[lo], nums[hi]);
+               <span class="k">while</span> (lo &lt; hi &amp;&amp; nums[lo]==nums[lo+<span class="nu">1</span>]) lo++;
+               <span class="k">while</span> (lo &lt; hi &amp;&amp; nums[hi]==nums[hi-<span class="nu">1</span>]) hi--;
+               lo++; hi--; }
+    }
+}`
+});
+
+PATTERNS.push({
+  id:"prefix", name:"Range Sum (Prefix)", d:"arrays · prefix sums",
+  build(){
+    const a=[3,1,4,1,5],f=[];const pre=[0];
+    f.push({a,pre:[...pre],q:null,say:"<b>Many range-sum queries?</b> Pay O(n) once: prefix[i+1] = prefix[i] + a[i]. Then any sum(i..j) is one subtraction."});
+    for(let i=0;i<a.length;i++){pre.push(pre[i]+a[i]);
+      f.push({a,pre:[...pre],q:null,say:`prefix[${i+1}] = ${pre[i]} + ${a[i]} = <b>${pre[i+1]}</b>.`});}
+    f.push({a,pre:[...pre],q:[1,3],say:`Query sum(1..3): prefix[4] − prefix[1] = ${pre[4]} − ${pre[1]} = <b>${pre[4]-pre[1]}</b>. O(1) per query, forever. Accumulate in <b>long</b> — sums overflow int.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"pay once, answer every range in O(1)");
+    cells(ctx,fr.a,330,110,0,66,{hi:fr.q?{1:{stroke:C.green},2:{stroke:C.green},3:{stroke:C.green}}:{}});
+    txt(ctx,"a",290,143,13,C.faint,"right");
+    cells(ctx,fr.pre,295,230,0,66,{hi:fr.q?{1:{stroke:C.cyan,color:C.cyan},4:{stroke:C.cyan,color:C.cyan}}:{}});
+    txt(ctx,"prefix",255,263,13,C.faint,"right");
+  },
+  kotlin:`<span class="k">val</span> pre = <span class="ty">LongArray</span>(n + <span class="nu">1</span>)
+<span class="k">for</span> (i <span class="k">in</span> <span class="nu">0</span> until n) pre[i+<span class="nu">1</span>] = pre[i] + a[i]
+<span class="k">fun</span> <span class="fn">range</span>(i: <span class="ty">Int</span>, j: <span class="ty">Int</span>) = pre[j+<span class="nu">1</span>] - pre[i]`,
+  java:`<span class="k">long</span>[] pre = <span class="k">new long</span>[n + <span class="nu">1</span>];
+<span class="k">for</span> (<span class="k">int</span> i = <span class="nu">0</span>; i &lt; n; i++) pre[i+<span class="nu">1</span>] = pre[i] + a[i];
+<span class="cm">// sum(i..j) inclusive:</span>
+<span class="k">long</span> range = pre[j+<span class="nu">1</span>] - pre[i];`
+});
+
+PATTERNS.push({
+  id:"product", name:"Product Except Self", d:"arrays · two passes",
+  build(){
+    const a=[1,2,3,4],f=[];const out=[1,0,0,0];
+    f.push({a,out:[1,"","",""],dir:0,say:"<b>No division allowed.</b> out[i] = (product of everything left of i) × (product of everything right). Two passes, O(1) extra space."});
+    for(let i=1;i<4;i++){out[i]=out[i-1]*a[i-1];
+      f.push({a,out:out.map((v,j)=>j<=i?v:""),dir:0,hi:i,say:`Left pass: out[${i}] = out[${i-1}] × a[${i-1}] = ${out[i]}.`});}
+    let right=1;
+    for(let i=3;i>=0;i--){out[i]*=right;
+      f.push({a,out:[...out],dir:1,hi:i,say:`Right pass: out[${i}] ×= right(${right}) → <b>${out[i]}</b>; right becomes ${right*a[i]}.`});
+      right*=a[i];}
+    f.push({a,out:[...out],dir:2,say:"Result [24,12,8,6]. The output array itself holds the left products — that's the O(1)-space trick."});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"left products down, right products back — no division");
+    cells(ctx,fr.a,330,100,0,64);
+    txt(ctx,"a",290,132,13,C.faint,"right");
+    const hi={};if(fr.hi!=null)hi[fr.hi]={stroke:fr.dir?C.amber:C.cyan,color:fr.dir?C.amber:C.cyan};
+    cells(ctx,fr.out,330,220,0,64,{hi});
+    txt(ctx,"out",290,252,13,C.faint,"right");
+  },
+  kotlin:`<span class="k">val</span> out = <span class="ty">IntArray</span>(n); out[<span class="nu">0</span>] = <span class="nu">1</span>
+<span class="k">for</span> (i <span class="k">in</span> <span class="nu">1</span> until n) out[i] = out[i-<span class="nu">1</span>] * a[i-<span class="nu">1</span>]
+<span class="k">var</span> right = <span class="nu">1</span>
+<span class="k">for</span> (i <span class="k">in</span> n-<span class="nu">1</span> downTo <span class="nu">0</span>) { out[i] *= right; right *= a[i] }`,
+  java:`<span class="k">int</span>[] out = <span class="k">new int</span>[n];
+out[<span class="nu">0</span>] = <span class="nu">1</span>;
+<span class="k">for</span> (<span class="k">int</span> i = <span class="nu">1</span>; i &lt; n; i++) out[i] = out[i-<span class="nu">1</span>] * a[i-<span class="nu">1</span>];
+<span class="k">int</span> right = <span class="nu">1</span>;
+<span class="k">for</span> (<span class="k">int</span> i = n-<span class="nu">1</span>; i &gt;= <span class="nu">0</span>; i--) { out[i] *= right; right *= a[i]; }`
+});
+
+PATTERNS.push({
+  id:"wdl", name:"WDL Grouping", d:"strings · round robin",
+  build(){
+    const f=[];let w=2,d=1,l=2;let out="";
+    f.push({w,d,l,out,say:"<b>\"WLDWL\" → counts W:2 D:1 L:2.</b> Emit one W, one D, one L per round, skipping exhausted letters — a frequency count plus round-robin emit."});
+    while(w>0||d>0||l>0){
+      let round="";
+      if(w>0){w--;round+="W";}
+      if(d>0){d--;round+="D";}
+      if(l>0){l--;round+="L";}
+      out+=round;
+      f.push({w,d,l,out,say:`Round emits "${round}". Output so far: <b>${out}</b>. Remaining W:${w} D:${d} L:${l}.`});
+    }
+    f.push({w,d,l,out,say:`Done: <b>${out}</b>. Two passes over the data — O(n) — and a StringBuilder, never string concatenation in a loop.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"count first, then emit in rounds");
+    cells(ctx,[fr.w,fr.d,fr.l],380,120,0,70,{labels:["W","D","L"]});
+    cells(ctx,fr.out?fr.out.split(""):["—"],360,260,0,60);
+    txt(ctx,"output",316,290,13,C.faint,"right");
+  },
+  kotlin:`<span class="k">var</span> w = s.count { it == <span class="s">'W'</span> } <span class="cm">// same for d, l</span>
+<span class="k">val</span> sb = <span class="ty">StringBuilder</span>()
+<span class="k">while</span> (w &gt; <span class="nu">0</span> || d &gt; <span class="nu">0</span> || l &gt; <span class="nu">0</span>) {
+    <span class="k">if</span> (w &gt; <span class="nu">0</span>) { sb.append(<span class="s">'W'</span>); w-- }
+    <span class="k">if</span> (d &gt; <span class="nu">0</span>) { sb.append(<span class="s">'D'</span>); d-- }
+    <span class="k">if</span> (l &gt; <span class="nu">0</span>) { sb.append(<span class="s">'L'</span>); l-- }
+}`,
+  java:`<span class="k">int</span> w = <span class="nu">0</span>, d = <span class="nu">0</span>, l = <span class="nu">0</span>;
+<span class="k">for</span> (<span class="k">char</span> c : s.toCharArray()) { <span class="cm">/* count */</span> }
+<span class="ty">StringBuilder</span> sb = <span class="k">new</span> <span class="ty">StringBuilder</span>();
+<span class="k">while</span> (w &gt; <span class="nu">0</span> || d &gt; <span class="nu">0</span> || l &gt; <span class="nu">0</span>) {
+    <span class="k">if</span> (w &gt; <span class="nu">0</span>) { sb.append(<span class="s">'W'</span>); w--; }
+    <span class="k">if</span> (d &gt; <span class="nu">0</span>) { sb.append(<span class="s">'D'</span>); d--; }
+    <span class="k">if</span> (l &gt; <span class="nu">0</span>) { sb.append(<span class="s">'L'</span>); l--; }
+}`
+});
+
+/* ============================== binary search & greedy ============================== */
+PATTERNS.push({
+  id:"bsearch", name:"Binary Search", d:"arrays · halving",
+  build(){
+    const a=[-1,0,3,5,9,12],t=9,f=[];let lo=0,hi=5;
+    f.push({a,lo,hi,mid:-1,say:"<b>Sorted array, target 9.</b> Loop while lo ≤ hi — when they're equal that last cell is still a real candidate."});
+    while(lo<=hi){
+      const mid=lo+((hi-lo)>>1);
+      f.push({a,lo,hi,mid,say:`mid = lo + (hi−lo)/2 = ${mid} → a[${mid}] = ${a[mid]}. ${a[mid]===t?"<b>Found it.</b>":a[mid]<t?"Too small — search right half.":"Too big — search left half."} (Writing (lo+hi)/2 overflows in Java/Kotlin.)`});
+      if(a[mid]===t)break;
+      if(a[mid]<t)lo=mid+1;else hi=mid-1;
+    }
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"halve the space every step — O(log n)");
+    const hi={};
+    for(let i=0;i<fr.a.length;i++) if(i<fr.lo||i>fr.hi) hi[i]={fill:"#10151b",color:C.faint};
+    if(fr.mid>=0)hi[fr.mid]={fill:"#2a2438",stroke:C.purple,color:C.purple};
+    const g=cells(ctx,fr.a,290,150,0,80,{hi});g.y=236;
+    pointer(ctx,g,fr.lo,"lo",C.cyan,0);pointer(ctx,g,fr.hi,"hi",C.amber,1);
+  },
+  kotlin:`<span class="k">var</span> lo = <span class="nu">0</span>; <span class="k">var</span> hi = nums.lastIndex
+<span class="k">while</span> (lo &lt;= hi) {
+    <span class="k">val</span> mid = lo + (hi - lo) / <span class="nu">2</span>       <span class="cm">// overflow-safe</span>
+    <span class="k">when</span> {
+        nums[mid] == target -&gt; <span class="k">return</span> mid
+        nums[mid] &lt; target  -&gt; lo = mid + <span class="nu">1</span>
+        <span class="k">else</span>                -&gt; hi = mid - <span class="nu">1</span>
+    }
+}
+<span class="k">return</span> -<span class="nu">1</span>`,
+  java:`<span class="k">int</span> lo = <span class="nu">0</span>, hi = nums.length - <span class="nu">1</span>;
+<span class="k">while</span> (lo &lt;= hi) {
+    <span class="k">int</span> mid = lo + (hi - lo) / <span class="nu">2</span>;
+    <span class="k">if</span> (nums[mid] == target) <span class="k">return</span> mid;
+    <span class="k">if</span> (nums[mid] &lt; target) lo = mid + <span class="nu">1</span>; <span class="k">else</span> hi = mid - <span class="nu">1</span>;
+}
+<span class="k">return</span> -<span class="nu">1</span>;`
+});
+
+PATTERNS.push({
+  id:"rotated", name:"Search Rotated Array", d:"arrays · modified bsearch",
+  build(){
+    const a=[4,5,6,7,0,1,2],t=0,f=[];let lo=0,hi=6;
+    f.push({a,lo,hi,mid:-1,say:"<b>[4,5,6,7,0,1,2], target 0.</b> Rotated, but binary search survives: at every mid, <b>one half is still properly sorted</b> — work out which, and whether the target lives in it."});
+    while(lo<=hi){
+      const mid=lo+((hi-lo)>>1);
+      if(a[mid]===t){f.push({a,lo,hi,mid,say:`a[${mid}] = ${a[mid]} — <b>found at index ${mid}</b>. Still O(log n).`});break;}
+      const leftSorted=a[lo]<=a[mid];
+      let say;
+      if(leftSorted){
+        if(t>=a[lo]&&t<a[mid]){say=`Left half [${a[lo]}..${a[mid]}] is sorted and contains ${t} — go left.`;}
+        else{say=`Left half [${a[lo]}..${a[mid]}] is sorted but ${t} isn't in it — go right.`;}
+      } else {
+        if(t>a[mid]&&t<=a[hi]){say=`Right half [${a[mid]}..${a[hi]}] is sorted and contains ${t} — go right.`;}
+        else{say=`Right half [${a[mid]}..${a[hi]}] is sorted but ${t} isn't in it — go left.`;}
+      }
+      f.push({a,lo,hi,mid,say:`mid=${mid} (${a[mid]}). ${say}`});
+      if(leftSorted){ if(t>=a[lo]&&t<a[mid])hi=mid-1;else lo=mid+1; }
+      else { if(t>a[mid]&&t<=a[hi])lo=mid+1;else hi=mid-1; }
+    }
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"one half is always sorted — decide from that half");
+    const hi={};
+    for(let i=0;i<fr.a.length;i++) if(i<fr.lo||i>fr.hi) hi[i]={fill:"#10151b",color:C.faint};
+    if(fr.mid>=0)hi[fr.mid]={fill:"#2a2438",stroke:C.purple,color:C.purple};
+    const g=cells(ctx,fr.a,270,150,0,80,{hi});g.y=236;
+    pointer(ctx,g,fr.lo,"lo",C.cyan,0);pointer(ctx,g,fr.hi,"hi",C.amber,1);
+  },
+  kotlin:`<span class="k">while</span> (lo &lt;= hi) {
+    <span class="k">val</span> mid = lo + (hi - lo) / <span class="nu">2</span>
+    <span class="k">if</span> (nums[mid] == target) <span class="k">return</span> mid
+    <span class="k">if</span> (nums[lo] &lt;= nums[mid]) {              <span class="cm">// left half sorted</span>
+        <span class="k">if</span> (target <span class="k">in</span> nums[lo] until nums[mid]) hi = mid - <span class="nu">1</span> <span class="k">else</span> lo = mid + <span class="nu">1</span>
+    } <span class="k">else</span> {                                   <span class="cm">// right half sorted</span>
+        <span class="k">if</span> (target &gt; nums[mid] &amp;&amp; target &lt;= nums[hi]) lo = mid + <span class="nu">1</span> <span class="k">else</span> hi = mid - <span class="nu">1</span>
+    }
+}`,
+  java:`<span class="k">while</span> (lo &lt;= hi) {
+    <span class="k">int</span> mid = lo + (hi - lo) / <span class="nu">2</span>;
+    <span class="k">if</span> (nums[mid] == target) <span class="k">return</span> mid;
+    <span class="k">if</span> (nums[lo] &lt;= nums[mid]) {
+        <span class="k">if</span> (target &gt;= nums[lo] &amp;&amp; target &lt; nums[mid]) hi = mid - <span class="nu">1</span>; <span class="k">else</span> lo = mid + <span class="nu">1</span>;
+    } <span class="k">else</span> {
+        <span class="k">if</span> (target &gt; nums[mid] &amp;&amp; target &lt;= nums[hi]) lo = mid + <span class="nu">1</span>; <span class="k">else</span> hi = mid - <span class="nu">1</span>;
+    }
+}`
+});
+
+PATTERNS.push({
+  id:"stock", name:"Buy & Sell Stock", d:"arrays · one pass",
+  build(){
+    const p=[7,1,5,3,6,4],f=[];let min=Infinity,best=0,mi=-1;
+    f.push({p,mi,best,i:-1,say:"<b>[7,1,5,3,6,4].</b> One pass: track the cheapest price so far, and at each day ask 'what if I sold today?'"});
+    for(let i=0;i<p.length;i++){
+      if(p[i]<min){min=p[i];mi=i;f.push({p,mi,best,i,say:`Day ${i}: ${p[i]} is the new cheapest buy.`});}
+      else{const prof=p[i]-min;if(prof>best)best=prof;
+        f.push({p,mi,best,i,say:`Day ${i}: sell at ${p[i]} after buying at ${min} → profit ${prof}${prof===best?" — <b>best so far</b>":""}.`});}
+    }
+    f.push({p,mi,best,i:-1,say:`Answer: <b>${best}</b> (buy 1, sell 6). O(n), O(1). The trap: you must buy before you sell — max−min over the whole array is wrong.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"cheapest-so-far, then 'what if I sold today?'");
+    const hi={};if(fr.mi>=0)hi[fr.mi]={fill:"#1f2d24",stroke:C.green,color:C.green};
+    if(fr.i>=0&&fr.i!==fr.mi)hi[fr.i]={fill:"#26313d",stroke:C.cyan};
+    bars(ctx,fr.p,270,90,460,220,{hi});
+    txt(ctx,"best profit = "+fr.best,500,370,18,C.green);
+  },
+  kotlin:`<span class="k">var</span> cheapest = <span class="ty">Int</span>.MAX_VALUE; <span class="k">var</span> best = <span class="nu">0</span>
+<span class="k">for</span> (p <span class="k">in</span> prices) {
+    cheapest = minOf(cheapest, p)
+    best = maxOf(best, p - cheapest)
+}`,
+  java:`<span class="k">int</span> cheapest = <span class="ty">Integer</span>.MAX_VALUE, best = <span class="nu">0</span>;
+<span class="k">for</span> (<span class="k">int</span> p : prices) {
+    cheapest = <span class="ty">Math</span>.min(cheapest, p);
+    best = <span class="ty">Math</span>.max(best, p - cheapest);
+}`
+});
+
+PATTERNS.push({
+  id:"kadane", name:"Maximum Subarray", d:"arrays · Kadane",
+  build(){
+    const a=[-2,1,-3,4,-1,2,1,-5,4],f=[];let cur=a[0],best=a[0];
+    f.push({a,i:0,cur,best,say:"<b>Kadane.</b> At each element: extend the running sum, or restart here — whichever is bigger. cur = max(a[i], cur + a[i])."});
+    for(let i=1;i<a.length;i++){
+      const restart=a[i]>cur+a[i];
+      cur=Math.max(a[i],cur+a[i]);best=Math.max(best,cur);
+      f.push({a,i,cur,best,say:`a[${i}] = ${a[i]}: ${restart?"<b>restart</b> — the old run only drags us down":"extend the run"} → cur = ${cur}, best = ${best}.`});
+    }
+    f.push({a,i:-1,cur,best,say:`Answer: <b>${best}</b> ([4,−1,2,1]). O(n), O(1). A negative running sum never helps — that's the whole insight.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"extend the run or restart — never carry a negative prefix");
+    const hi={};if(fr.i>=0)hi[fr.i]={fill:"#2a2438",stroke:C.purple,color:C.purple};
+    cells(ctx,fr.a,180,150,0,76,{hi});
+    txt(ctx,"cur = "+fr.cur,380,300,17,C.cyan);
+    txt(ctx,"best = "+fr.best,620,300,17,C.green);
+  },
+  kotlin:`<span class="k">var</span> cur = nums[<span class="nu">0</span>]; <span class="k">var</span> best = nums[<span class="nu">0</span>]
+<span class="k">for</span> (i <span class="k">in</span> <span class="nu">1</span> until nums.size) {
+    cur = maxOf(nums[i], cur + nums[i])
+    best = maxOf(best, cur)
+}`,
+  java:`<span class="k">int</span> cur = nums[<span class="nu">0</span>], best = nums[<span class="nu">0</span>];
+<span class="k">for</span> (<span class="k">int</span> i = <span class="nu">1</span>; i &lt; nums.length; i++) {
+    cur = <span class="ty">Math</span>.max(nums[i], cur + nums[i]);
+    best = <span class="ty">Math</span>.max(best, cur);
+}`
+});
+
+PATTERNS.push({
+  id:"jump", name:"Jump Game", d:"greedy · reach",
+  build(){
+    const a=[2,3,1,1,4],f=[];let reach=0;
+    f.push({a,i:-1,reach,say:"<b>[2,3,1,1,4].</b> Greedy: keep the furthest index reachable so far. If the loop index ever passes it, you're stranded."});
+    for(let i=0;i<a.length;i++){
+      if(i>reach){f.push({a,i,reach,say:`Index ${i} is beyond reach ${reach} — <b>stranded</b>, return false.`});break;}
+      const nr=Math.max(reach,i+a[i]);
+      f.push({a,i,reach:nr,say:`At ${i} (value ${a[i]}): reach = max(${reach}, ${i}+${a[i]}) = <b>${nr}</b>${nr>=a.length-1?" — covers the last index.":"."}`});
+      reach=nr;
+    }
+    f.push({a,i:-1,reach,say:"Reach covers the end → <b>true</b>. O(n), O(1). No DP needed — greedy furthest-reach is complete for this problem."});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"furthest reach so far — stranded if i ever passes it");
+    const hi={};
+    for(let i=0;i<fr.a.length;i++) if(i<=fr.reach) hi[i]={fill:"#1f2d24",stroke:C.green};
+    if(fr.i>=0)hi[fr.i]={fill:"#2a2438",stroke:C.purple,color:C.purple};
+    cells(ctx,fr.a,330,150,0,80,{hi,labels:[0,1,2,3,4]});
+    txt(ctx,"reach = "+fr.reach,500,310,18,C.green);
+  },
+  kotlin:`<span class="k">var</span> reach = <span class="nu">0</span>
+<span class="k">for</span> (i <span class="k">in</span> nums.indices) {
+    <span class="k">if</span> (i &gt; reach) <span class="k">return false</span>
+    reach = maxOf(reach, i + nums[i])
+}
+<span class="k">return true</span>`,
+  java:`<span class="k">int</span> reach = <span class="nu">0</span>;
+<span class="k">for</span> (<span class="k">int</span> i = <span class="nu">0</span>; i &lt; nums.length; i++) {
+    <span class="k">if</span> (i &gt; reach) <span class="k">return false</span>;
+    reach = <span class="ty">Math</span>.max(reach, i + nums[i]);
+}
+<span class="k">return true</span>;`
+});
+
+/* ============================== stack ============================== */
+PATTERNS.push({
+  id:"parens", name:"Valid Parentheses", d:"stack · matching",
+  build(){
+    const s="({[]})".split(""),f=[];const st=[];const pairs={")":"(","]":"[","}":"{"};
+    f.push({s,i:-1,st:[],say:"<b>\"({[]})\".</b> Openers push; a closer must match the most recent unresolved opener — which is exactly what a stack's top is."});
+    for(let i=0;i<s.length;i++){
+      if("([{".includes(s[i])){st.push(s[i]);f.push({s,i,st:[...st],say:`'${s[i]}' is an opener — push. Stack: [${st.join(" ")}].`});}
+      else{const top=st.pop();
+        f.push({s,i,st:[...st],say:`'${s[i]}' closes — pop '${top}' ${pairs[s[i]]===top?"— <b>matches</b>.":"— MISMATCH, return false."} Stack: [${st.join(" ")}].`});}
+    }
+    f.push({s,i:-1,st:[...st],say:"End of string with an <b>empty stack</b> → valid. The two failure modes: mismatch mid-way, or leftovers at the end."});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"closers must match the most recent opener — LIFO");
+    const hi={};if(fr.i>=0)hi[fr.i]={fill:"#2a2438",stroke:C.purple,color:C.purple};
+    cells(ctx,fr.s,330,130,0,72,{hi});
+    txt(ctx,"stack (top right):",380,290,14,C.faint,"right");
+    cells(ctx,fr.st.length?fr.st:["∅"],400,260,0,60);
+  },
+  kotlin:`<span class="k">val</span> stack = <span class="ty">ArrayDeque</span>&lt;<span class="ty">Char</span>&gt;()
+<span class="k">val</span> pairs = mapOf(<span class="s">')'</span> <span class="k">to</span> <span class="s">'('</span>, <span class="s">']'</span> <span class="k">to</span> <span class="s">'['</span>, <span class="s">'}'</span> <span class="k">to</span> <span class="s">'{'</span>)
+<span class="k">for</span> (c <span class="k">in</span> s) {
+    <span class="k">if</span> (c <span class="k">in</span> pairs.values) stack.addLast(c)
+    <span class="k">else if</span> (stack.removeLastOrNull() != pairs[c]) <span class="k">return false</span>
+}
+<span class="k">return</span> stack.isEmpty()`,
+  java:`<span class="ty">Deque</span>&lt;<span class="ty">Character</span>&gt; stack = <span class="k">new</span> <span class="ty">ArrayDeque</span>&lt;&gt;();
+<span class="k">for</span> (<span class="k">char</span> c : s.toCharArray()) {
+    <span class="k">if</span> (c == <span class="s">'('</span> || c == <span class="s">'['</span> || c == <span class="s">'{'</span>) stack.push(c);
+    <span class="k">else</span> {
+        <span class="k">if</span> (stack.isEmpty()) <span class="k">return false</span>;
+        <span class="k">char</span> top = stack.pop();
+        <span class="k">if</span> ((c == <span class="s">')'</span> &amp;&amp; top != <span class="s">'('</span>) ||
+            (c == <span class="s">']'</span> &amp;&amp; top != <span class="s">'['</span>) ||
+            (c == <span class="s">'}'</span> &amp;&amp; top != <span class="s">'{'</span>)) <span class="k">return false</span>;
+    }
+}
+<span class="k">return</span> stack.isEmpty();`
+});
+
+/* ============================== dynamic programming ============================== */
+PATTERNS.push({
+  id:"stairs", name:"Climbing Stairs", d:"dp · Fibonacci shape",
+  build(){
+    const n=6,f=[];const dp=[1,1];
+    f.push({dp:[...dp],i:1,say:"<b>Ways to climb n steps taking 1 or 2 at a time.</b> To stand on step i you came from i−1 or i−2, so dp[i] = dp[i−1] + dp[i−2] — Fibonacci."});
+    for(let i=2;i<=n;i++){dp[i]=dp[i-1]+dp[i-2];
+      f.push({dp:[...dp],i,say:`dp[${i}] = dp[${i-1}] + dp[${i-2}] = ${dp[i-1]} + ${dp[i-2]} = <b>${dp[i]}</b>.`});}
+    f.push({dp:[...dp],i:-1,say:`dp[6] = <b>${dp[6]}</b>. Only the last two values ever matter → O(1) space with two variables. Almost every 1-D DP is this shape or take-or-skip.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"dp[i] = dp[i−1] + dp[i−2]");
+    const hi={};if(fr.i>=0){hi[fr.i]={fill:"#2a2438",stroke:C.purple,color:C.purple};
+      if(fr.i>=1)hi[fr.i-1]={fill:"#26313d",stroke:C.cyan};if(fr.i>=2)hi[fr.i-2]={fill:"#26313d",stroke:C.cyan};}
+    cells(ctx,fr.dp,290,160,0,80,{hi,labels:[...Array(fr.dp.length).keys()]});
+  },
+  kotlin:`<span class="k">var</span> prev = <span class="nu">1</span>; <span class="k">var</span> cur = <span class="nu">1</span>
+<span class="k">repeat</span>(n - <span class="nu">1</span>) {
+    <span class="k">val</span> next = prev + cur
+    prev = cur; cur = next
+}
+<span class="k">return</span> cur`,
+  java:`<span class="k">int</span> prev = <span class="nu">1</span>, cur = <span class="nu">1</span>;
+<span class="k">for</span> (<span class="k">int</span> i = <span class="nu">2</span>; i &lt;= n; i++) {
+    <span class="k">int</span> next = prev + cur;
+    prev = cur; cur = next;
+}
+<span class="k">return</span> cur;`
+});
+
+PATTERNS.push({
+  id:"robber", name:"House Robber", d:"dp · take or skip",
+  build(){
+    const a=[2,7,9,3,1],f=[];let skip=0,take=0;
+    f.push({a,i:-1,skip,take,say:"<b>[2,7,9,3,1], no two adjacent.</b> Two rolling values: best <i>including</i> the previous house (take) and best <i>excluding</i> it (skip)."});
+    for(let i=0;i<a.length;i++){
+      const nt=Math.max(skip+a[i],take);
+      f.push({a,i,skip:take,take:nt,say:`House ${i} (${a[i]}): rob it → skip+${a[i]} = ${skip+a[i]}; or keep the old best ${take}. New take = <b>${nt}</b>.`});
+      skip=take;take=nt;
+    }
+    f.push({a,i:-1,skip,take,say:`Answer: <b>${take}</b> (2+9+1). The non-adjacency constraint is the same one in the max-couple-difference problem — this is the base pattern for it.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"take = max(skip + value, take) — two rolling variables");
+    const hi={};if(fr.i>=0)hi[fr.i]={fill:"#2a2438",stroke:C.purple,color:C.purple};
+    cells(ctx,fr.a,300,150,0,80,{hi});
+    txt(ctx,"skip = "+fr.skip,380,310,17,C.cyan);
+    txt(ctx,"take = "+fr.take,620,310,17,C.green);
+  },
+  kotlin:`<span class="k">var</span> skip = <span class="nu">0</span>; <span class="k">var</span> take = <span class="nu">0</span>
+<span class="k">for</span> (x <span class="k">in</span> nums) {
+    <span class="k">val</span> next = maxOf(skip + x, take)
+    skip = take; take = next
+}
+<span class="k">return</span> take`,
+  java:`<span class="k">int</span> skip = <span class="nu">0</span>, take = <span class="nu">0</span>;
+<span class="k">for</span> (<span class="k">int</span> x : nums) {
+    <span class="k">int</span> next = <span class="ty">Math</span>.max(skip + x, take);
+    skip = take; take = next;
+}
+<span class="k">return</span> take;`
+});
+
+PATTERNS.push({
+  id:"lis", name:"Longest Incr. Subsequence", d:"dp · patience O(n log n)",
+  build(){
+    const a=[10,9,2,5,3,7,101,18],f=[];const tails=[];
+    f.push({a,i:-1,tails:[],say:"<b>Patience version.</b> tails[k] = smallest possible tail of an increasing subsequence of length k+1. Each element binary-searches its slot: extend, or improve an existing tail."});
+    for(let i=0;i<a.length;i++){
+      let lo=0,hi=tails.length;
+      while(lo<hi){const m=(lo+hi)>>1;if(tails[m]<a[i])lo=m+1;else hi=m;}
+      const extend=lo===tails.length;
+      tails[lo]=a[i];
+      f.push({a,i,tails:[...tails],slot:lo,say:`${a[i]}: binary search finds slot ${lo} — ${extend?"<b>extends</b> the longest subsequence":`replaces the tail there with a smaller one (better future prospects)`}. tails = [${tails.join(", ")}].`});
+    }
+    f.push({a,i:-1,tails:[...tails],say:`Length = tails.size = <b>${tails.length}</b> ([2,3,7,18] or [2,5,7,101]). Note: tails is NOT itself the subsequence — only its length is meaningful. O(n log n).`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"tails[k] = smallest tail of a length-k+1 subsequence");
+    const hi={};if(fr.i>=0)hi[fr.i]={fill:"#2a2438",stroke:C.purple,color:C.purple};
+    cells(ctx,fr.a,190,110,0,66,{hi});
+    txt(ctx,"a",150,143,13,C.faint,"right");
+    const th={};if(fr.slot!=null)th[fr.slot]={stroke:C.green,color:C.green};
+    cells(ctx,fr.tails.length?fr.tails:["∅"],330,240,0,66,{hi:th});
+    txt(ctx,"tails",290,272,13,C.faint,"right");
+  },
+  kotlin:`<span class="k">val</span> tails = <span class="k">mutableListOf</span>&lt;<span class="ty">Int</span>&gt;()
+<span class="k">for</span> (x <span class="k">in</span> nums) {
+    <span class="k">val</span> i = tails.binarySearch(x).let { <span class="k">if</span> (it &lt; <span class="nu">0</span>) -it - <span class="nu">1</span> <span class="k">else</span> it }
+    <span class="k">if</span> (i == tails.size) tails.add(x) <span class="k">else</span> tails[i] = x
+}
+<span class="k">return</span> tails.size`,
+  java:`<span class="k">int</span>[] tails = <span class="k">new int</span>[nums.length];
+<span class="k">int</span> size = <span class="nu">0</span>;
+<span class="k">for</span> (<span class="k">int</span> x : nums) {
+    <span class="k">int</span> i = <span class="ty">Arrays</span>.binarySearch(tails, <span class="nu">0</span>, size, x);
+    <span class="k">if</span> (i &lt; <span class="nu">0</span>) i = -(i + <span class="nu">1</span>);
+    tails[i] = x;
+    <span class="k">if</span> (i == size) size++;
+}
+<span class="k">return</span> size;`
+});
+
+PATTERNS.push({
+  id:"wordbreak", name:"Word Break", d:"dp · reachable prefixes",
+  build(){
+    const s="applepen",dict=["apple","pen"],f=[];
+    const dp=new Array(s.length+1).fill(false);dp[0]=true;
+    f.push({s,dp:[...dp],end:-1,st:-1,say:"<b>\"applepen\", dict {apple, pen}.</b> dp[end] = the prefix of length end is segmentable. dp[0] = true (empty prefix). For each end, look for a true dp[start] where s[start..end) is a word."});
+    for(let end=1;end<=s.length;end++){
+      for(let st=0;st<end;st++){
+        if(dp[st]&&dict.includes(s.slice(st,end))){
+          dp[end]=true;
+          f.push({s,dp:[...dp],end,st,say:`dp[${end}]: dp[${st}] is true and "${s.slice(st,end)}" is a word → <b>true</b>.`});
+          break;
+        }
+      }
+      if(!dp[end])f.push({s,dp:[...dp],end,st:-1,say:`dp[${end}]: no split works — false.`});
+    }
+    f.push({s,dp:[...dp],end:-1,st:-1,say:`dp[${s.length}] = <b>true</b> — "apple"+"pen". Put the dictionary in a <b>HashSet</b> first; O(n²) substring checks against a list is the classic slowdown.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"dp[end] = some true dp[start] + a dictionary word");
+    cells(ctx,fr.s.split(""),240,100,0,60);
+    const hi={};if(fr.end>=0)hi[fr.end]={fill:"#2a2438",stroke:C.purple,color:C.purple};
+    if(fr.st>=0)hi[fr.st]={fill:"#26313d",stroke:C.cyan,color:C.cyan};
+    cells(ctx,fr.dp.map(b=>b?"T":"·"),205,220,0,60,{hi,labels:[...Array(fr.dp.length).keys()]});
+    txt(ctx,"dp",165,250,13,C.faint,"right");
+  },
+  kotlin:`<span class="k">val</span> words = wordDict.toHashSet()
+<span class="k">val</span> dp = <span class="ty">BooleanArray</span>(s.length + <span class="nu">1</span>)
+dp[<span class="nu">0</span>] = <span class="k">true</span>
+<span class="k">for</span> (end <span class="k">in</span> <span class="nu">1</span>..s.length)
+    <span class="k">for</span> (start <span class="k">in</span> <span class="nu">0</span> until end)
+        <span class="k">if</span> (dp[start] &amp;&amp; s.substring(start, end) <span class="k">in</span> words) {
+            dp[end] = <span class="k">true</span>; <span class="k">break</span>
+        }
+<span class="k">return</span> dp[s.length]`,
+  java:`<span class="ty">Set</span>&lt;<span class="ty">String</span>&gt; words = <span class="k">new</span> <span class="ty">HashSet</span>&lt;&gt;(wordDict);
+<span class="k">boolean</span>[] dp = <span class="k">new boolean</span>[s.length() + <span class="nu">1</span>];
+dp[<span class="nu">0</span>] = <span class="k">true</span>;
+<span class="k">for</span> (<span class="k">int</span> end = <span class="nu">1</span>; end &lt;= s.length(); end++)
+    <span class="k">for</span> (<span class="k">int</span> start = <span class="nu">0</span>; start &lt; end; start++)
+        <span class="k">if</span> (dp[start] &amp;&amp; words.contains(s.substring(start, end))) {
+            dp[end] = <span class="k">true</span>; <span class="k">break</span>;
+        }
+<span class="k">return</span> dp[s.length()];`
+});
+
+/* ============================== linked lists ============================== */
+PATTERNS.push({
+  id:"revlist", name:"Reverse Linked List", d:"linked list · 3 pointers",
+  build(){
+    const vals=[1,2,3,4],f=[];
+    let links=[1,2,3,-1];let prev=-1,node=0;
+    const snap=(say,extra={})=>f.push({vals,links:[...links],prev,node,say,...extra});
+    snap("<b>1→2→3→4.</b> Three pointers: prev, node, next. Save next BEFORE overwriting the pointer — lose it and the rest of the list is gone.");
+    while(node!==-1){
+      const next=links[node];
+      links[node]=prev;
+      snap(`node ${vals[node]}: save next, then point ${vals[node]}.next back to ${prev===-1?"null":vals[prev]}. Advance prev and node.`);
+      prev=node;node=next;
+    }
+    snap("node is null — done. <b>prev is the new head</b> (4→3→2→1). O(n), O(1). Returning the old head instead of prev is the classic slip.");
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"save next first — then flip the arrow");
+    const labels={};if(fr.prev>=0)labels[fr.prev]="prev";if(fr.node>=0)labels[fr.node]="node";
+    const hi={};if(fr.node>=0)hi[fr.node]={stroke:C.purple};if(fr.prev>=0)hi[fr.prev]={stroke:C.green};
+    chain(ctx,fr.vals,fr.links,270,210,{hi,labels});
+  },
+  kotlin:`<span class="k">var</span> prev: <span class="ty">ListNode</span>? = <span class="k">null</span>
+<span class="k">var</span> node = head
+<span class="k">while</span> (node != <span class="k">null</span>) {
+    <span class="k">val</span> next = node.next      <span class="cm">// save BEFORE overwriting</span>
+    node.next = prev
+    prev = node
+    node = next
+}
+<span class="k">return</span> prev                   <span class="cm">// prev is the new head</span>`,
+  java:`<span class="ty">ListNode</span> prev = <span class="k">null</span>, node = head;
+<span class="k">while</span> (node != <span class="k">null</span>) {
+    <span class="ty">ListNode</span> next = node.next;
+    node.next = prev;
+    prev = node;
+    node = next;
+}
+<span class="k">return</span> prev;`
+});
+
+PATTERNS.push({
+  id:"cycle", name:"Linked List Cycle", d:"linked list · fast/slow",
+  build(){
+    const vals=[3,2,0,4],links=[1,2,3,1],f=[];  // 4 -> back to index 1
+    let slow=0,fast=0;
+    f.push({vals,links,slow,fast,say:"<b>3→2→0→4→(back to 2).</b> Floyd: slow moves 1, fast moves 2. In a cycle, fast laps slow and they must meet — like runners on a track."});
+    do{
+      slow=links[slow];fast=links[links[fast]];
+      f.push({vals,links,slow,fast,say:`slow at ${vals[slow]}, fast at ${vals[fast]}${slow===fast?" — <b>they meet: cycle detected</b>.":"."}`});
+    }while(slow!==fast);
+    f.push({vals,links,slow,fast,say:"O(n) time, <b>O(1) space</b> — no HashSet of visited nodes needed. Follow-up they'll ask: reset one pointer to head and step both by 1 to find the cycle's entry."});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"fast laps slow — meeting proves a cycle, O(1) space");
+    const labels={};labels[fr.slow]=(fr.slow===fr.fast?"slow+fast":"slow");
+    if(fr.fast!==fr.slow)labels[fr.fast]="fast";
+    const hi={};hi[fr.slow]={stroke:C.cyan};hi[fr.fast]={stroke:fr.slow===fr.fast?C.red:C.amber};
+    chain(ctx,fr.vals,fr.links,270,230,{hi,labels});
+  },
+  kotlin:`<span class="k">var</span> slow = head; <span class="k">var</span> fast = head
+<span class="k">while</span> (fast?.next != <span class="k">null</span>) {
+    slow = slow!!.next
+    fast = fast.next!!.next
+    <span class="k">if</span> (slow === fast) <span class="k">return true</span>   <span class="cm">// identity, not equals</span>
+}
+<span class="k">return false</span>`,
+  java:`<span class="ty">ListNode</span> slow = head, fast = head;
+<span class="k">while</span> (fast != <span class="k">null</span> &amp;&amp; fast.next != <span class="k">null</span>) {
+    slow = slow.next;
+    fast = fast.next.next;
+    <span class="k">if</span> (slow == fast) <span class="k">return true</span>;
+}
+<span class="k">return false</span>;`
+});
+
+PATTERNS.push({
+  id:"mergelists", name:"Merge Two Sorted Lists", d:"linked list · dummy head",
+  build(){
+    const A=[1,3,5],B=[2,4],f=[];const out=[];let i=0,j=0;
+    f.push({A,B,i,j,out:[],say:"<b>1→3→5 and 2→4.</b> A dummy head kills every 'is this the first node?' special case. Compare heads, attach the smaller, advance that list."});
+    while(i<A.length&&j<B.length){
+      if(A[i]<=B[j]){out.push(A[i]);f.push({A,B,i:i+1,j,out:[...out],say:`${A[i]} ≤ ${B[j]} — attach ${A[i]} from list A.`});i++;}
+      else{out.push(B[j]);f.push({A,B,i,j:j+1,out:[...out],say:`${B[j]} &lt; ${A[i]} — attach ${B[j]} from list B.`});j++;}
+    }
+    while(i<A.length){out.push(A[i]);i++;}
+    while(j<B.length){out.push(B[j]);j++;}
+    f.push({A,B,i,j,out:[...out],say:`One list ran out — attach the <b>whole remainder</b> in O(1) (it's already linked). Result: ${out.join("→")}. Return dummy.next.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"dummy head + attach the smaller head each step");
+    cells(ctx,fr.A.map((v,k)=>k<fr.i?"·":v),330,90,0,56);
+    txt(ctx,"A",290,118,13,C.faint,"right");
+    cells(ctx,fr.B.map((v,k)=>k<fr.j?"·":v),365,180,0,56);
+    txt(ctx,"B",325,208,13,C.faint,"right");
+    cells(ctx,fr.out.length?fr.out:["∅"],295,300,0,56);
+    txt(ctx,"merged",255,328,13,C.faint,"right");
+  },
+  kotlin:`<span class="k">val</span> dummy = <span class="ty">ListNode</span>(<span class="nu">0</span>)
+<span class="k">var</span> tail = dummy
+<span class="k">var</span> a = l1; <span class="k">var</span> b = l2
+<span class="k">while</span> (a != <span class="k">null</span> &amp;&amp; b != <span class="k">null</span>) {
+    <span class="k">if</span> (a.v &lt;= b.v) { tail.next = a; a = a.next }
+    <span class="k">else</span>            { tail.next = b; b = b.next }
+    tail = tail.next!!
+}
+tail.next = a ?: b
+<span class="k">return</span> dummy.next`,
+  java:`<span class="ty">ListNode</span> dummy = <span class="k">new</span> <span class="ty">ListNode</span>(<span class="nu">0</span>), tail = dummy;
+<span class="k">while</span> (a != <span class="k">null</span> &amp;&amp; b != <span class="k">null</span>) {
+    <span class="k">if</span> (a.val &lt;= b.val) { tail.next = a; a = a.next; }
+    <span class="k">else</span>                { tail.next = b; b = b.next; }
+    tail = tail.next;
+}
+tail.next = (a != <span class="k">null</span>) ? a : b;
+<span class="k">return</span> dummy.next;`
+});
+
+PATTERNS.push({
+  id:"nthend", name:"Remove Nth From End", d:"linked list · gap trick",
+  build(){
+    const vals=[1,2,3,4,5],n=2,f=[];
+    let fast=0,slow=0;  // conceptually starting at dummy(=index -1); use 0-based walk
+    f.push({vals,fast:-1,slow:-1,gone:-1,say:"<b>1→2→3→4→5, remove 2nd from end.</b> One pass: advance fast n steps first, opening a gap of exactly n. Then move both until fast hits the end — slow lands just before the target."});
+    let fi=0;
+    for(let s=0;s<n;s++){f.push({vals,fast:fi,slow:-1,gone:-1,say:`Advance fast to index ${fi} — building the ${n}-gap.`});fi++;}
+    let si=-1; // slow starts at dummy
+    while(fi<vals.length){
+      si++;fi++;
+      f.push({vals,fast:fi-1,slow:si,gone:-1,say:`Move both. fast at ${fi-1<vals.length?vals[fi-1]:"end"}, slow at ${si>=0?vals[si]:"dummy"}.`});
+    }
+    const gone=si+1;
+    f.push({vals,fast:-1,slow:si,gone,say:`fast reached the end, so slow (${vals[si]}) sits just before the target: <b>remove ${vals[gone]}</b> with slow.next = slow.next.next. The dummy head handles “remove the first node” cleanly.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"open a gap of n, then walk both to the end");
+    const labels={};if(fr.fast>=0&&fr.fast<fr.vals.length)labels[fr.fast]="fast";
+    if(fr.slow>=0)labels[fr.slow]="slow";
+    const hi={};if(fr.gone>=0)hi[fr.gone]={fill:"#2a1f26",stroke:C.red,color:C.red};
+    if(fr.slow>=0)hi[fr.slow]={...(hi[fr.slow]||{}),stroke:C.green};
+    if(fr.fast>=0&&fr.fast<fr.vals.length)hi[fr.fast]={...(hi[fr.fast]||{}),stroke:C.amber};
+    chain(ctx,fr.vals,fr.vals.map((_,k)=>fr.gone>=0&&k===fr.gone-1?(fr.gone+1<fr.vals.length?fr.gone+1:-1):(k<fr.vals.length-1?k+1:-1)),220,220,{hi,labels});
+  },
+  kotlin:`<span class="k">val</span> dummy = <span class="ty">ListNode</span>(<span class="nu">0</span>).apply { next = head }
+<span class="k">var</span> fast: <span class="ty">ListNode</span>? = dummy
+<span class="k">var</span> slow: <span class="ty">ListNode</span>? = dummy
+<span class="k">repeat</span>(n) { fast = fast!!.next }          <span class="cm">// open the gap</span>
+<span class="k">while</span> (fast!!.next != <span class="k">null</span>) { fast = fast!!.next; slow = slow!!.next }
+slow!!.next = slow!!.next!!.next
+<span class="k">return</span> dummy.next`,
+  java:`<span class="ty">ListNode</span> dummy = <span class="k">new</span> <span class="ty">ListNode</span>(<span class="nu">0</span>);
+dummy.next = head;
+<span class="ty">ListNode</span> fast = dummy, slow = dummy;
+<span class="k">for</span> (<span class="k">int</span> i = <span class="nu">0</span>; i &lt; n; i++) fast = fast.next;
+<span class="k">while</span> (fast.next != <span class="k">null</span>) { fast = fast.next; slow = slow.next; }
+slow.next = slow.next.next;
+<span class="k">return</span> dummy.next;`
+});
+
+/* ============================== trees ============================== */
+PATTERNS.push({
+  id:"levelorder", name:"Level Order Traversal", d:"trees · BFS snapshot",
+  build(){
+    const v=[3,9,20,null,null,15,7],f=[];
+    const kids=i=>[2*i+1,2*i+2].filter(k=>k<7&&v[k]!=null);
+    let q=[0];const out=[];
+    f.push({v,q:[...q],out:[],hi:{},say:"<b>BFS with a queue.</b> The trick for per-level grouping: snapshot the queue size at the start of each level — exactly that many polls belong to this level."});
+    while(q.length){
+      const size=q.length,level=[];
+      f.push({v,q:[...q],out:out.map(x=>[...x]),hi:Object.fromEntries(q.map(i=>[i,{stroke:C.cyan}])),say:`Level starts: queue holds ${size} node(s) — snapshot size = ${size}.`});
+      for(let s=0;s<size;s++){
+        const n=q.shift();level.push(v[n]);
+        kids(n).forEach(k=>q.push(k));
+        f.push({v,q:[...q],out:out.map(x=>[...x]),hi:{[n]:{fill:"#1f2d24",stroke:C.green}},say:`Poll ${v[n]}, add its children. Level so far: [${level.join(", ")}].`});
+      }
+      out.push(level);
+    }
+    f.push({v,q:[],out:out.map(x=>[...x]),hi:{},say:`Levels: ${JSON.stringify(out)}. Without the size snapshot everything merges into one flat list — that's the bug interviewers watch for.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"snapshot the queue size — that's one level");
+    tree(ctx,fr.v,{hi:fr.hi});
+    txt(ctx,"queue: ["+fr.q.map(i=>fr.v[i]).join(", ")+"]",500,350,15,C.cyan);
+    txt(ctx,"levels: "+JSON.stringify(fr.out),500,385,14,C.green);
+  },
+  kotlin:`<span class="k">val</span> q = <span class="ty">ArrayDeque</span>&lt;<span class="ty">TreeNode</span>&gt;().apply { root?.let { add(it) } }
+<span class="k">while</span> (q.isNotEmpty()) {
+    <span class="k">val</span> size = q.size                <span class="cm">// snapshot = one level</span>
+    <span class="k">val</span> level = <span class="k">mutableListOf</span>&lt;<span class="ty">Int</span>&gt;()
+    <span class="k">repeat</span>(size) {
+        <span class="k">val</span> n = q.removeFirst()
+        level.add(n.v)
+        n.left?.let { q.add(it) }; n.right?.let { q.add(it) }
+    }
+    out.add(level)
+}`,
+  java:`<span class="ty">Deque</span>&lt;<span class="ty">TreeNode</span>&gt; q = <span class="k">new</span> <span class="ty">ArrayDeque</span>&lt;&gt;();
+<span class="k">if</span> (root != <span class="k">null</span>) q.add(root);
+<span class="k">while</span> (!q.isEmpty()) {
+    <span class="k">int</span> size = q.size();
+    <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt; level = <span class="k">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="nu">0</span>; i &lt; size; i++) {
+        <span class="ty">TreeNode</span> n = q.poll();
+        level.add(n.val);
+        <span class="k">if</span> (n.left != <span class="k">null</span>) q.add(n.left);
+        <span class="k">if</span> (n.right != <span class="k">null</span>) q.add(n.right);
+    }
+    out.add(level);
+}`
+});
+
+PATTERNS.push({
+  id:"invert", name:"Invert Binary Tree", d:"trees · swap + recurse",
+  build(){
+    const f=[];
+    let v=[4,2,7,1,3,6,9];
+    f.push({v:[...v],hi:{},say:"<b>Mirror the tree.</b> At every node: swap its two children, then recurse. Trust that the recursive call already inverts the subtree."});
+    f.push({v:[...v],hi:{0:{stroke:C.purple}},say:"At root 4: swap left(2) and right(7)."});
+    v=[4,7,2,6,9,1,3];
+    f.push({v:[...v],hi:{0:{stroke:C.green}},say:"Swapped. Whole subtrees moved with their roots — the recursion will fix their insides."});
+    f.push({v:[...v],hi:{1:{stroke:C.purple},2:{stroke:C.purple}},say:"Recurse: swap 7's children (6,9) and 2's children (1,3)."});
+    v=[4,7,2,9,6,3,1];
+    f.push({v:[...v],hi:{1:{stroke:C.green},2:{stroke:C.green}},say:"Done — a perfect mirror. O(n) time, O(h) stack. Save one child in a temp before overwriting, exactly like reversing a list."});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"swap children, recurse — trust the smaller call");
+    tree(ctx,fr.v,{hi:fr.hi});
+  },
+  kotlin:`<span class="k">fun</span> <span class="fn">invert</span>(root: <span class="ty">TreeNode</span>?): <span class="ty">TreeNode</span>? {
+    root ?: <span class="k">return null</span>
+    <span class="k">val</span> tmp = root.left           <span class="cm">// save before overwrite</span>
+    root.left = invert(root.right)
+    root.right = invert(tmp)
+    <span class="k">return</span> root
+}`,
+  java:`<span class="ty">TreeNode</span> invert(<span class="ty">TreeNode</span> root) {
+    <span class="k">if</span> (root == <span class="k">null</span>) <span class="k">return null</span>;
+    <span class="ty">TreeNode</span> tmp = root.left;
+    root.left = invert(root.right);
+    root.right = invert(tmp);
+    <span class="k">return</span> root;
+}`
+});
+
+PATTERNS.push({
+  id:"maxdepth", name:"Max Depth of Tree", d:"trees · post-order",
+  build(){
+    const v=[3,9,20,null,null,15,7],f=[];
+    f.push({v,hi:{},d:{},say:"<b>depth(node) = 1 + max(depth(left), depth(right)).</b> Depths bubble up from the leaves — post-order."});
+    f.push({v,hi:{3:{},4:{},1:{stroke:C.green}},d:{1:1},say:"Node 9 has no children: depth 1."});
+    f.push({v,hi:{5:{stroke:C.green},6:{stroke:C.green}},d:{1:1,5:1,6:1},say:"Leaves 15 and 7: depth 1 each."});
+    f.push({v,hi:{2:{stroke:C.cyan}},d:{1:1,5:1,6:1,2:2},say:"Node 20 = 1 + max(1,1) = <b>2</b>."});
+    f.push({v,hi:{0:{stroke:C.purple}},d:{1:1,5:1,6:1,2:2,0:3},say:"Root 3 = 1 + max(1,2) = <b>3</b>. Three lines of code; the entire skill is trusting the recursive call."});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"depths bubble up from the leaves");
+    tree(ctx,fr.v,{hi:fr.hi});
+    Object.entries(fr.d||{}).forEach(([i,d])=>{
+      const [x,y]=TREE_POS[i];txt(ctx,"d="+d,x+42,y-14,12,C.green);
+    });
+  },
+  kotlin:`<span class="k">fun</span> <span class="fn">maxDepth</span>(root: <span class="ty">TreeNode</span>?): <span class="ty">Int</span> {
+    root ?: <span class="k">return</span> <span class="nu">0</span>
+    <span class="k">return</span> <span class="nu">1</span> + maxOf(maxDepth(root.left), maxDepth(root.right))
+}`,
+  java:`<span class="k">int</span> maxDepth(<span class="ty">TreeNode</span> root) {
+    <span class="k">if</span> (root == <span class="k">null</span>) <span class="k">return</span> <span class="nu">0</span>;
+    <span class="k">return</span> <span class="nu">1</span> + <span class="ty">Math</span>.max(maxDepth(root.left), maxDepth(root.right));
+}`
+});
+
+PATTERNS.push({
+  id:"validbst", name:"Validate BST", d:"trees · carry bounds down",
+  build(){
+    const v=[5,3,8,1,6,7,9],f=[]; // node index 4 = 6, child of 3 -> INVALID (6 > 5 while in left subtree)
+    f.push({v,hi:{},say:"<b>The classic wrong answer:</b> compare each node only with its children. This tree passes that check — yet 6 sits in 5's LEFT subtree. You must carry <b>(min, max) bounds</b> down."});
+    f.push({v,hi:{0:{stroke:C.cyan}},say:"Root 5: bounds (−∞, +∞) — fine."});
+    f.push({v,hi:{1:{stroke:C.cyan}},say:"Left child 3: bounds (−∞, 5) — fine."});
+    f.push({v,hi:{4:{fill:"#2a1f26",stroke:C.red,color:C.red}},say:"3's right child 6: bounds are (3, <b>5</b>) — inherited max is 5 because we went left at the root. 6 &gt; 5 → <b>not a BST</b>."});
+    f.push({v,hi:{4:{fill:"#2a1f26",stroke:C.red,color:C.red}},say:"The parent-child check would have said 6 &gt; 3 = fine. Only the inherited bound catches it. Also: use Long bounds or null-able bounds — Integer.MIN/MAX as sentinels breaks on edge values."});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"each node must respect bounds inherited from ALL ancestors");
+    tree(ctx,fr.v,{hi:fr.hi});
+  },
+  kotlin:`<span class="k">fun</span> <span class="fn">valid</span>(n: <span class="ty">TreeNode</span>?, min: <span class="ty">Long</span>, max: <span class="ty">Long</span>): <span class="ty">Boolean</span> {
+    n ?: <span class="k">return true</span>
+    <span class="k">if</span> (n.v &lt;= min || n.v &gt;= max) <span class="k">return false</span>
+    <span class="k">return</span> valid(n.left, min, n.v.toLong()) &amp;&amp;
+           valid(n.right, n.v.toLong(), max)
+}`,
+  java:`<span class="k">boolean</span> valid(<span class="ty">TreeNode</span> n, <span class="ty">Long</span> min, <span class="ty">Long</span> max) {
+    <span class="k">if</span> (n == <span class="k">null</span>) <span class="k">return true</span>;
+    <span class="k">if</span> (min != <span class="k">null</span> &amp;&amp; n.val &lt;= min) <span class="k">return false</span>;
+    <span class="k">if</span> (max != <span class="k">null</span> &amp;&amp; n.val &gt;= max) <span class="k">return false</span>;
+    <span class="k">return</span> valid(n.left, min, (<span class="k">long</span>) n.val)
+        &amp;&amp; valid(n.right, (<span class="k">long</span>) n.val, max);
+}`
+});
+
+PATTERNS.push({
+  id:"lca", name:"LCA of a BST", d:"trees · walk from root",
+  build(){
+    const v=[6,2,8,0,4,7,9],f=[];const p=0,q=4; // find LCA of 0 and 4 -> 2
+    f.push({v,hi:{3:{stroke:C.amber},4:{stroke:C.amber}},say:"<b>Find the lowest common ancestor of 0 and 4.</b> In a BST you don't need parent pointers: walk from the root, and the first node <b>between</b> p and q is the answer."});
+    f.push({v,hi:{0:{stroke:C.cyan},3:{stroke:C.amber},4:{stroke:C.amber}},say:"At 6: both 0 and 4 are smaller → the split point is further left."});
+    f.push({v,hi:{1:{fill:"#1f2d24",stroke:C.green,color:C.green},3:{stroke:C.amber},4:{stroke:C.amber}},say:"At 2: 0 &lt; 2 ≤ 4 — the paths <b>split here</b>. LCA = <b>2</b>. Iterative, O(h), no recursion needed."});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"first node where the two targets split — that's the LCA");
+    tree(ctx,fr.v,{hi:fr.hi});
+  },
+  kotlin:`<span class="k">var</span> node = root
+<span class="k">while</span> (node != <span class="k">null</span>) {
+    node = <span class="k">when</span> {
+        p.v &lt; node.v &amp;&amp; q.v &lt; node.v -&gt; node.left
+        p.v &gt; node.v &amp;&amp; q.v &gt; node.v -&gt; node.right
+        <span class="k">else</span> -&gt; <span class="k">return</span> node          <span class="cm">// split point</span>
+    }
+}`,
+  java:`<span class="ty">TreeNode</span> node = root;
+<span class="k">while</span> (node != <span class="k">null</span>) {
+    <span class="k">if</span> (p.val &lt; node.val &amp;&amp; q.val &lt; node.val) node = node.left;
+    <span class="k">else if</span> (p.val &gt; node.val &amp;&amp; q.val &gt; node.val) node = node.right;
+    <span class="k">else return</span> node;
+}`
+});
+
+/* ============================== graphs & grids ============================== */
+PATTERNS.push({
+  id:"islands", name:"Number of Islands", d:"graphs · flood fill",
+  build(){
+    const g=[["1","1","0"],["1","0","0"],["0","0","1"]];const f=[];let count=0;
+    const st=g.map(r=>r.map(c=>c==="1"?1:0)); // 1 land, 0 water, 2 sunk
+    const snap=(say,cur)=>f.push({st:st.map(r=>[...r]),count,cur,say});
+    snap("<b>Scan every cell.</b> On unvisited land: count it, then flood-fill (sink) the whole island so it's never counted again. Marking in place — no separate visited[][] needed.");
+    const sink=(r,c)=>{
+      if(r<0||r>2||c<0||c>2||st[r][c]!==1)return;
+      st[r][c]=2;
+      snap(`Sink (${r},${c}) and spread to its neighbours.`,[r,c]);
+      sink(r+1,c);sink(r-1,c);sink(r,c+1);sink(r,c-1);
+    };
+    for(let r=0;r<3;r++)for(let c=0;c<3;c++){
+      if(st[r][c]===1){count++;snap(`Unvisited land at (${r},${c}) — island #${count}. Flood-fill it.`,[r,c]);sink(r,c);}
+    }
+    snap(`Done: <b>${count} islands</b>. O(m·n) — every cell touched a constant number of times. DFS recursion depth can blow the stack on huge grids; mention the BFS alternative.`);
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"count on first touch, then sink the whole island");
+    const cs=90,gap=8,x0=500-(3*cs+2*gap)/2,y0=110;
+    for(let r=0;r<3;r++)for(let c=0;c<3;c++){
+      const s=fr.st[r][c];
+      const isCur=fr.cur&&fr.cur[0]===r&&fr.cur[1]===c;
+      box(ctx,x0+c*(cs+gap),y0+r*(cs+gap),cs,cs,
+        s===1?"#2a2a1f":s===2?"#1f2d24":"#131a21",
+        isCur?C.purple:s===1?C.amber:s===2?C.green:C.line,9);
+      txt(ctx,s===0?"~":s===1?"land":"sunk",x0+c*(cs+gap)+cs/2,y0+r*(cs+gap)+cs/2,13,
+        s===1?C.amber:s===2?C.green:C.faint);
+    }
+    txt(ctx,"islands = "+fr.count,500,430,18,C.green);
+  },
+  kotlin:`<span class="k">fun</span> <span class="fn">numIslands</span>(g: <span class="ty">Array</span>&lt;<span class="ty">CharArray</span>&gt;): <span class="ty">Int</span> {
+    <span class="k">var</span> count = <span class="nu">0</span>
+    <span class="k">for</span> (r <span class="k">in</span> g.indices) <span class="k">for</span> (c <span class="k">in</span> g[<span class="nu">0</span>].indices)
+        <span class="k">if</span> (g[r][c] == <span class="s">'1'</span>) { sink(g, r, c); count++ }
+    <span class="k">return</span> count
+}
+<span class="k">fun</span> <span class="fn">sink</span>(g: <span class="ty">Array</span>&lt;<span class="ty">CharArray</span>&gt;, r: <span class="ty">Int</span>, c: <span class="ty">Int</span>) {
+    <span class="k">if</span> (r !in g.indices || c !in g[<span class="nu">0</span>].indices || g[r][c] != <span class="s">'1'</span>) <span class="k">return</span>
+    g[r][c] = <span class="s">'0'</span>
+    sink(g,r+<span class="nu">1</span>,c); sink(g,r-<span class="nu">1</span>,c); sink(g,r,c+<span class="nu">1</span>); sink(g,r,c-<span class="nu">1</span>)
+}`,
+  java:`<span class="k">int</span> numIslands(<span class="k">char</span>[][] g) {
+    <span class="k">int</span> count = <span class="nu">0</span>;
+    <span class="k">for</span> (<span class="k">int</span> r = <span class="nu">0</span>; r &lt; g.length; r++)
+        <span class="k">for</span> (<span class="k">int</span> c = <span class="nu">0</span>; c &lt; g[<span class="nu">0</span>].length; c++)
+            <span class="k">if</span> (g[r][c] == <span class="s">'1'</span>) { sink(g, r, c); count++; }
+    <span class="k">return</span> count;
+}
+<span class="k">void</span> sink(<span class="k">char</span>[][] g, <span class="k">int</span> r, <span class="k">int</span> c) {
+    <span class="k">if</span> (r &lt; <span class="nu">0</span> || r &gt;= g.length || c &lt; <span class="nu">0</span> || c &gt;= g[<span class="nu">0</span>].length
+        || g[r][c] != <span class="s">'1'</span>) <span class="k">return</span>;
+    g[r][c] = <span class="s">'0'</span>;
+    sink(g,r+<span class="nu">1</span>,c); sink(g,r-<span class="nu">1</span>,c); sink(g,r,c+<span class="nu">1</span>); sink(g,r,c-<span class="nu">1</span>);
+}`
+});
+
+PATTERNS.push({
+  id:"components", name:"Connected Components", d:"graphs · union-find",
+  build(){
+    const n=5,edges=[[0,1],[1,2],[3,4]];const parent=[0,1,2,3,4];const f=[];
+    let comp=n;
+    const find=x=>{while(parent[x]!==x)x=parent[x];return x;};
+    f.push({parent:[...parent],comp,edge:null,say:"<b>5 nodes, edges (0-1)(1-2)(3-4).</b> Union-Find: every node starts as its own parent — 5 components. Each union that joins two different roots removes one component."});
+    for(const [a,b] of edges){
+      const ra=find(a),rb=find(b);
+      if(ra!==rb){parent[ra]=rb;comp--;}
+      f.push({parent:[...parent],comp,edge:[a,b],say:`Edge (${a},${b}): roots ${ra} and ${rb}${ra!==rb?` differ — union them. Components: <b>${comp}</b>.`:" are the same — already connected, skip."}`});
+    }
+    f.push({parent:[...parent],comp,edge:null,say:`Answer: <b>${comp}</b> components ({0,1,2} and {3,4}). With union-by-rank + path compression, find() is near O(1) amortised — cheap to memorise and it appears constantly.`});
+    return f;
+  },
+  render(ctx,fr){
+    tagline(ctx,"components = n − successful unions");
+    const find=x=>{let p=fr.parent;while(p[x]!==x)x=p[x];return x;};
+    const cols=[C.cyan,C.green,C.amber,C.purple,C.red];
+    for(let i=0;i<5;i++){
+      const x=180+i*160,y=190;
+      const root=find(i);
+      ctx.beginPath();ctx.arc(x,y,28,0,7);
+      ctx.fillStyle=C.cell;ctx.fill();
+      ctx.strokeStyle=cols[root%5];ctx.lineWidth=2.4;ctx.stroke();
+      txt(ctx,String(i),x,y,16,cols[root%5]);
+      txt(ctx,"root "+root,x,y+46,11,C.faint);
+    }
+    if(fr.edge){const [a,b]=fr.edge;
+      ctx.strokeStyle=C.purple;ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(180+a*160,162);
+      ctx.bezierCurveTo(180+a*160,100,180+b*160,100,180+b*160,162);ctx.stroke();}
+    txt(ctx,"components = "+fr.comp,500,330,19,C.green);
+  },
+  kotlin:`<span class="k">val</span> parent = <span class="ty">IntArray</span>(n) { it }
+<span class="k">fun</span> <span class="fn">find</span>(x: <span class="ty">Int</span>): <span class="ty">Int</span> {
+    <span class="k">var</span> r = x
+    <span class="k">while</span> (parent[r] != r) { parent[r] = parent[parent[r]]; r = parent[r] }
+    <span class="k">return</span> r
+}
+<span class="k">var</span> comp = n
+<span class="k">for</span> ((a, b) <span class="k">in</span> edges) {
+    <span class="k">val</span> ra = find(a); <span class="k">val</span> rb = find(b)
+    <span class="k">if</span> (ra != rb) { parent[ra] = rb; comp-- }
+}`,
+  java:`<span class="k">int</span>[] parent = <span class="k">new int</span>[n];
+<span class="k">for</span> (<span class="k">int</span> i = <span class="nu">0</span>; i &lt; n; i++) parent[i] = i;
+<span class="k">int</span> comp = n;
+<span class="k">for</span> (<span class="k">int</span>[] e : edges) {
+    <span class="k">int</span> ra = find(parent, e[<span class="nu">0</span>]), rb = find(parent, e[<span class="nu">1</span>]);
+    <span class="k">if</span> (ra != rb) { parent[ra] = rb; comp--; }
+}
+<span class="cm">// find with path compression:</span>
+<span class="k">int</span> find(<span class="k">int</span>[] p, <span class="k">int</span> x) {
+    <span class="k">while</span> (p[x] != x) { p[x] = p[p[x]]; x = p[x]; }
+    <span class="k">return</span> x;
+}`
+});
+
+/* ============================== narrated walkthroughs ============================== */
+PATTERNS.push(story("groupana","Group Anagrams","narrated · derived key",
+  "sorted letters = the group key",[
+  {say:"<b>Group Anagrams.</b> The insight is choosing a canonical key: two words are anagrams exactly when their sorted letters are equal — \"eat\", \"tea\", \"ate\" all become \"aet\"."},
+  {say:"So: one HashMap&lt;String, List&lt;String&gt;&gt;. For each word, sort its characters into the key and append the word with computeIfAbsent(key, k -&gt; new ArrayList&lt;&gt;())."},
+  {say:"Cost: O(n · k log k) for n words of length k. The follow-up: replace the sort with a 26-count array joined into a key — O(n · k), no sorting at all."},
+  {say:"This is the general pattern of <b>grouping by a derived key</b> — the same move as grouping bookings by route or errors by fingerprint."}],
+`<span class="k">val</span> groups = <span class="ty">HashMap</span>&lt;<span class="ty">String</span>, <span class="ty">MutableList</span>&lt;<span class="ty">String</span>&gt;&gt;()
+<span class="k">for</span> (w <span class="k">in</span> strs) {
+    <span class="k">val</span> key = <span class="ty">String</span>(w.toCharArray().apply { sort() })
+    groups.getOrPut(key) { <span class="k">mutableListOf</span>() }.add(w)
+}
+<span class="k">return</span> groups.values.toList()`,
+`<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">List</span>&lt;<span class="ty">String</span>&gt;&gt; groups = <span class="k">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+<span class="k">for</span> (<span class="ty">String</span> w : strs) {
+    <span class="k">char</span>[] key = w.toCharArray();
+    <span class="ty">Arrays</span>.sort(key);
+    groups.computeIfAbsent(<span class="k">new</span> <span class="ty">String</span>(key), k -&gt; <span class="k">new</span> <span class="ty">ArrayList</span>&lt;&gt;()).add(w);
+}
+<span class="k">return new</span> <span class="ty">ArrayList</span>&lt;&gt;(groups.values());`));
+
+PATTERNS.push(story("topk","Top K Frequent","narrated · size-k heap",
+  "count, then keep only k in the heap",[
+  {say:"<b>Top K Frequent Elements.</b> Two phases: count frequencies in a HashMap, then find the k biggest counts — without sorting all of them."},
+  {say:"Keep a <b>size-k MIN-heap</b> ordered by frequency. Push each key; when the heap exceeds k, pop — the least frequent leaves. Whatever survives is the answer."},
+  {say:"Why min and not max? Because the heap's job is to <b>evict the weakest</b> cheaply, and the weakest sits on top of a min-heap. O(n log k)."},
+  {say:"If they push for better: bucket sort by count — index = frequency — gives O(n). Say it, then note the heap is what you'd write in the room."}],
+`<span class="k">val</span> freq = nums.toList().groupingBy { it }.eachCount()
+<span class="k">val</span> heap = <span class="ty">PriorityQueue</span>&lt;<span class="ty">Int</span>&gt;(compareBy { freq[it] })
+<span class="k">for</span> (key <span class="k">in</span> freq.keys) {
+    heap.add(key)
+    <span class="k">if</span> (heap.size &gt; k) heap.poll()
+}`,
+`<span class="ty">Map</span>&lt;<span class="ty">Integer</span>,<span class="ty">Integer</span>&gt; freq = <span class="k">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+<span class="k">for</span> (<span class="k">int</span> x : nums) freq.merge(x, <span class="nu">1</span>, <span class="ty">Integer</span>::sum);
+<span class="ty">PriorityQueue</span>&lt;<span class="ty">Integer</span>&gt; heap =
+    <span class="k">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;(<span class="ty">Comparator</span>.comparingInt(freq::get));
+<span class="k">for</span> (<span class="k">int</span> key : freq.keySet()) {
+    heap.offer(key);
+    <span class="k">if</span> (heap.size() &gt; k) heap.poll();
+}`));
+
+PATTERNS.push(story("clonegraph","Clone Graph","narrated · map as visited",
+  "the old→new map IS the visited set",[
+  {say:"<b>Clone Graph.</b> DFS with a HashMap from original node → its clone. The map plays double duty: it's the visited set AND the lookup for already-built copies."},
+  {say:"The one ordering rule that matters: <b>register the clone in the map BEFORE recursing</b> into neighbours. A cycle comes back to a node mid-clone — the map entry breaks the infinite loop."},
+  {say:"Then: for each neighbour, clone.neighbors.add(clone(neighbour)) — either freshly built or fetched from the map."},
+  {say:"O(V+E). The same put-before-recurse discipline shows up in deep-copying any cyclic structure — say that generalisation."}],
+`<span class="k">fun</span> <span class="fn">clone</span>(n: <span class="ty">Node</span>?, made: <span class="ty">HashMap</span>&lt;<span class="ty">Node</span>, <span class="ty">Node</span>&gt;): <span class="ty">Node</span>? {
+    n ?: <span class="k">return null</span>
+    made[n]?.let { <span class="k">return</span> it }
+    <span class="k">val</span> copy = <span class="ty">Node</span>(n.v)
+    made[n] = copy                <span class="cm">// BEFORE recursing</span>
+    <span class="k">for</span> (nb <span class="k">in</span> n.neighbors) copy.neighbors.add(clone(nb, made)!!)
+    <span class="k">return</span> copy
+}`,
+`<span class="ty">Node</span> clone(<span class="ty">Node</span> n, <span class="ty">Map</span>&lt;<span class="ty">Node</span>,<span class="ty">Node</span>&gt; made) {
+    <span class="k">if</span> (n == <span class="k">null</span>) <span class="k">return null</span>;
+    <span class="k">if</span> (made.containsKey(n)) <span class="k">return</span> made.get(n);
+    <span class="ty">Node</span> copy = <span class="k">new</span> <span class="ty">Node</span>(n.val);
+    made.put(n, copy);            <span class="cm">// register BEFORE recursing</span>
+    <span class="k">for</span> (<span class="ty">Node</span> nb : n.neighbors) copy.neighbors.add(clone(nb, made));
+    <span class="k">return</span> copy;
+}`));
+
+PATTERNS.push(story("pacific","Pacific Atlantic","narrated · reverse flow",
+  "walk inward from both oceans, uphill",[
+  {say:"<b>Pacific Atlantic Water Flow.</b> The naive version asks, per cell, 'can water flow out to both oceans?' — one search per cell, O((mn)²)."},
+  {say:"The inversion: start <b>from the oceans</b> and walk inward, moving only <b>uphill</b>. Two boolean grids — pacific-reachable and atlantic-reachable — each filled by one multi-source DFS/BFS seeded from that ocean's edges."},
+  {say:"A cell in the answer is simply one marked true in <b>both</b> grids. Two searches total: O(mn)."},
+  {say:"This reverse-the-search trick is a general one: when many sources ask 'can I reach X?', run one search FROM X instead. Same move as multi-source BFS in Rotting Oranges."}],
+`<span class="cm">// seed from the edges, walk uphill only</span>
+<span class="k">fun</span> <span class="fn">flow</span>(h: <span class="ty">Array</span>&lt;<span class="ty">IntArray</span>&gt;, seen: <span class="ty">Array</span>&lt;<span class="ty">BooleanArray</span>&gt;, r: <span class="ty">Int</span>, c: <span class="ty">Int</span>) {
+    seen[r][c] = <span class="k">true</span>
+    <span class="k">for</span> ((dy, dx) <span class="k">in</span> dirs) {
+        <span class="k">val</span> nr = r+dy; <span class="k">val</span> nc = c+dx
+        <span class="k">if</span> (nr <span class="k">in</span> h.indices &amp;&amp; nc <span class="k">in</span> h[<span class="nu">0</span>].indices
+            &amp;&amp; !seen[nr][nc] &amp;&amp; h[nr][nc] &gt;= h[r][c]) flow(h, seen, nr, nc)
+    }
+}`,
+`<span class="k">void</span> flow(<span class="k">int</span>[][] h, <span class="k">boolean</span>[][] seen, <span class="k">int</span> r, <span class="k">int</span> c) {
+    seen[r][c] = <span class="k">true</span>;
+    <span class="k">int</span>[][] dirs = {{<span class="nu">1</span>,<span class="nu">0</span>},{-<span class="nu">1</span>,<span class="nu">0</span>},{<span class="nu">0</span>,<span class="nu">1</span>},{<span class="nu">0</span>,-<span class="nu">1</span>}};
+    <span class="k">for</span> (<span class="k">int</span>[] d : dirs) {
+        <span class="k">int</span> nr = r + d[<span class="nu">0</span>], nc = c + d[<span class="nu">1</span>];
+        <span class="k">if</span> (nr &gt;= <span class="nu">0</span> &amp;&amp; nr &lt; h.length &amp;&amp; nc &gt;= <span class="nu">0</span> &amp;&amp; nc &lt; h[<span class="nu">0</span>].length
+            &amp;&amp; !seen[nr][nc] &amp;&amp; h[nr][nc] &gt;= h[r][c]) flow(h, seen, nr, nc);
+    }
+}`));
+
+PATTERNS.push(story("rings","Sort Matrix Layers","narrated · ring as a path",
+  "collect the ring once, sort, write back",[
+  {say:"<b>Sort each concentric ring of a matrix.</b> The whole battle is index discipline: for layer L of an m×n matrix, the ring is top row → right column → bottom row (reversed) → left column (reversed)."},
+  {say:"Collect the ring's positions <b>once</b> into a list, in path order. Two guards stop double-counting: only walk the bottom row if bottom &gt; top, only walk the left column if right &gt; left — a one-row ring must not be visited twice."},
+  {say:"Read the values at those positions, sort them, write them back along the same path. Ring by ring, (min(m,n)+1)/2 layers."},
+  {say:"O(mn log(ring)) overall. The reusable idea: turn awkward 2-D traversal into a 1-D <b>path of coordinates</b>, then operate on the path."}],
+`<span class="k">for</span> (layer <span class="k">in</span> <span class="nu">0</span> until (minOf(rows, cols) + <span class="nu">1</span>) / <span class="nu">2</span>) {
+    <span class="k">val</span> pos = <span class="k">mutableListOf</span>&lt;<span class="ty">Pair</span>&lt;<span class="ty">Int</span>,<span class="ty">Int</span>&gt;&gt;()
+    <span class="k">for</span> (c <span class="k">in</span> left..right) pos.add(top <span class="k">to</span> c)
+    <span class="k">for</span> (r <span class="k">in</span> top+<span class="nu">1</span>..bottom) pos.add(r <span class="k">to</span> right)
+    <span class="k">if</span> (bottom &gt; top) <span class="k">for</span> (c <span class="k">in</span> right-<span class="nu">1</span> downTo left) pos.add(bottom <span class="k">to</span> c)
+    <span class="k">if</span> (right &gt; left) <span class="k">for</span> (r <span class="k">in</span> bottom-<span class="nu">1</span> downTo top+<span class="nu">1</span>) pos.add(r <span class="k">to</span> left)
+    <span class="k">val</span> vals = pos.map { (r, c) -&gt; m[r][c] }.sorted()
+    pos.forEachIndexed { k, (r, c) -&gt; m[r][c] = vals[k] }
+}`,
+`<span class="ty">List</span>&lt;<span class="k">int</span>[]&gt; pos = <span class="k">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+<span class="k">for</span> (<span class="k">int</span> c = left; c &lt;= right; c++) pos.add(<span class="k">new int</span>[]{top, c});
+<span class="k">for</span> (<span class="k">int</span> r = top+<span class="nu">1</span>; r &lt;= bottom; r++) pos.add(<span class="k">new int</span>[]{r, right});
+<span class="k">if</span> (bottom &gt; top)
+    <span class="k">for</span> (<span class="k">int</span> c = right-<span class="nu">1</span>; c &gt;= left; c--) pos.add(<span class="k">new int</span>[]{bottom, c});
+<span class="k">if</span> (right &gt; left)
+    <span class="k">for</span> (<span class="k">int</span> r = bottom-<span class="nu">1</span>; r &gt;= top+<span class="nu">1</span>; r--) pos.add(<span class="k">new int</span>[]{r, left});
+<span class="cm">// read values along pos, sort, write back along pos</span>`));
+
+PATTERNS.push(story("lamp","Lamp Coverage","narrated · difference array",
+  "+1 at start, −1 after end, sweep",[
+  {say:"<b>Points lit by exactly one lamp.</b> Each lamp lights [pos−r, pos+r]. Brute force per point is hopeless when coordinates are huge — the coordinates, not the count, are the problem."},
+  {say:"Difference-array sweep: in a TreeMap, add +1 at (pos−r) and −1 at (pos+r+1). Only the <b>change points</b> matter."},
+  {say:"Walk the sorted keys with a running coverage counter. Between consecutive keys, coverage is constant — when it equals exactly 1, that whole gap length counts toward the answer."},
+  {say:"O(n log n) in the number of lamps, independent of the coordinate range. This sweep is the same instrument as merge-intervals and calendar-booking problems."}],
+`<span class="k">val</span> diff = <span class="ty">TreeMap</span>&lt;<span class="ty">Int</span>, <span class="ty">Int</span>&gt;()
+<span class="k">for</span> ((pos, r) <span class="k">in</span> lamps) {
+    diff.merge(pos - r, <span class="nu">1</span>, <span class="ty">Int</span>::plus)
+    diff.merge(pos + r + <span class="nu">1</span>, -<span class="nu">1</span>, <span class="ty">Int</span>::plus)
+}
+<span class="k">var</span> coverage = <span class="nu">0</span>; <span class="k">var</span> prev = <span class="nu">0</span>; <span class="k">var</span> ans = <span class="nu">0</span>L
+<span class="k">for</span> ((point, delta) <span class="k">in</span> diff) {
+    <span class="k">if</span> (coverage == <span class="nu">1</span>) ans += point - prev
+    coverage += delta; prev = point
+}`,
+`<span class="ty">TreeMap</span>&lt;<span class="ty">Integer</span>,<span class="ty">Integer</span>&gt; diff = <span class="k">new</span> <span class="ty">TreeMap</span>&lt;&gt;();
+<span class="k">for</span> (<span class="k">int</span>[] lamp : lamps) {
+    diff.merge(lamp[<span class="nu">0</span>] - lamp[<span class="nu">1</span>], <span class="nu">1</span>, <span class="ty">Integer</span>::sum);
+    diff.merge(lamp[<span class="nu">0</span>] + lamp[<span class="nu">1</span>] + <span class="nu">1</span>, -<span class="nu">1</span>, <span class="ty">Integer</span>::sum);
+}
+<span class="k">int</span> coverage = <span class="nu">0</span>, prev = <span class="nu">0</span>; <span class="k">long</span> ans = <span class="nu">0</span>;
+<span class="k">for</span> (<span class="k">var</span> e : diff.entrySet()) {
+    <span class="k">if</span> (coverage == <span class="nu">1</span>) ans += e.getKey() - prev;
+    coverage += e.getValue(); prev = e.getKey();
+}`));
+
+PATTERNS.push(story("palpart","Palindrome Partitioning II","narrated · two DP tables",
+  "pal[i][j] table + cuts[] in one sweep",[
+  {say:"<b>Minimum cuts so every piece is a palindrome.</b> Two structures filled together: pal[start][end] (is that substring a palindrome?) and cuts[end] (fewest cuts for the prefix ending at end)."},
+  {say:"pal[start][end] is true when the end characters match AND the inside is short (length &lt; 3) or itself a palindrome — pal[start+1][end−1], already computed."},
+  {say:"Whenever pal[start][end] holds: if start is 0 the whole prefix is one palindrome — cuts[end] = 0; otherwise cuts[end] = min(cuts[end], cuts[start−1] + 1)."},
+  {say:"O(n²) time and space. The habit worth naming: interleaving a feasibility table with an optimisation table in the same sweep — a common senior-level DP composition."}],
+`<span class="k">val</span> pal = <span class="ty">Array</span>(n) { <span class="ty">BooleanArray</span>(n) }
+<span class="k">val</span> cuts = <span class="ty">IntArray</span>(n)
+<span class="k">for</span> (end <span class="k">in</span> <span class="nu">0</span> until n) {
+    <span class="k">var</span> min = end                      <span class="cm">// worst case: cut everywhere</span>
+    <span class="k">for</span> (start <span class="k">in</span> <span class="nu">0</span>..end) {
+        <span class="k">if</span> (s[start] == s[end] &amp;&amp; (end - start &lt; <span class="nu">2</span> || pal[start+<span class="nu">1</span>][end-<span class="nu">1</span>])) {
+            pal[start][end] = <span class="k">true</span>
+            min = <span class="k">if</span> (start == <span class="nu">0</span>) <span class="nu">0</span> <span class="k">else</span> minOf(min, cuts[start-<span class="nu">1</span>] + <span class="nu">1</span>)
+        }
+    }
+    cuts[end] = min
+}
+<span class="k">return</span> cuts[n-<span class="nu">1</span>]`,
+`<span class="k">boolean</span>[][] pal = <span class="k">new boolean</span>[n][n];
+<span class="k">int</span>[] cuts = <span class="k">new int</span>[n];
+<span class="k">for</span> (<span class="k">int</span> end = <span class="nu">0</span>; end &lt; n; end++) {
+    <span class="k">int</span> min = end;
+    <span class="k">for</span> (<span class="k">int</span> start = <span class="nu">0</span>; start &lt;= end; start++) {
+        <span class="k">if</span> (s.charAt(start) == s.charAt(end)
+                &amp;&amp; (end - start &lt; <span class="nu">2</span> || pal[start+<span class="nu">1</span>][end-<span class="nu">1</span>])) {
+            pal[start][end] = <span class="k">true</span>;
+            min = (start == <span class="nu">0</span>) ? <span class="nu">0</span> : <span class="ty">Math</span>.min(min, cuts[start-<span class="nu">1</span>] + <span class="nu">1</span>);
+        }
+    }
+    cuts[end] = min;
+}
+<span class="k">return</span> cuts[n-<span class="nu">1</span>];`));
+
+/* =================================================================== player */
+const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+let cur=PATTERNS[0], frames=cur.build(), idx=0, playing=false, timer=null, lang="k";
+
+function el(id){ return document.getElementById(id); }
+
+function drawFrame(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle=C.bg; ctx.fillRect(0,0,cv.width,cv.height);
+  const fr=frames[Math.min(idx,frames.length-1)];
+  cur.render(ctx,fr);
+  el("say").innerHTML=fr.say;
+  el("stepLbl").textContent=`step ${idx+1} / ${frames.length}`;
+  el("scrub").max=frames.length-1;
+  el("scrub").value=idx;
+}
+
+function setPattern(p){
+  cur=p; frames=p.build(); idx=0; stop();
+  el("plist").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.id===p.id));
+  el("codeBox").innerHTML = lang==="k" ? p.kotlin : p.java;
+  drawFrame();
+}
+function stop(){ playing=false; clearInterval(timer); timer=null; el("play").innerHTML="&#9654; Play"; }
+function play(){
+  if(playing){ stop(); return; }
+  if(idx>=frames.length-1) idx=0;
+  playing=true; el("play").innerHTML="&#10074;&#10074; Pause";
+  timer=setInterval(()=>{
+    if(idx<frames.length-1){ idx++; drawFrame(); } else stop();
+  }, +el("speed").value);
+}
+
+el("plist").innerHTML=PATTERNS.map((p,i)=>
+  `<button data-id="${p.id}">${String(i+1).padStart(2,"0")} ${p.name}<span class="d">${p.d}</span></button>`).join("");
+el("plist").querySelectorAll("button").forEach(b=>
+  b.onclick=()=>setPattern(PATTERNS.find(p=>p.id===b.dataset.id)));
+
+el("play").onclick=play;
+el("fwd").onclick=()=>{ stop(); if(idx<frames.length-1){idx++; drawFrame();} };
+el("back").onclick=()=>{ stop(); if(idx>0){idx--; drawFrame();} };
+el("restart").onclick=()=>{ stop(); idx=0; drawFrame(); };
+el("scrub").oninput=e=>{ stop(); idx=+e.target.value; drawFrame(); };
+el("speed").onchange=()=>{ if(playing){ stop(); play(); } };
+el("tabK").onclick=()=>{ lang="k"; el("tabK").classList.add("on"); el("tabJ").classList.remove("on"); el("codeBox").innerHTML=cur.kotlin; };
+el("tabJ").onclick=()=>{ lang="j"; el("tabJ").classList.add("on"); el("tabK").classList.remove("on"); el("codeBox").innerHTML=cur.java; };
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT") return;
+  if(e.code==="Space"){ e.preventDefault(); play(); }
+  if(e.key==="ArrowRight"){ stop(); if(idx<frames.length-1){idx++; drawFrame();} }
+  if(e.key==="ArrowLeft"){ stop(); if(idx>0){idx--; drawFrame();} }
+});
+
+// Support deep-linking via ?pattern=<id>
+const _p = new URLSearchParams(window.location.search).get("pattern");
+const _start = _p && PATTERNS.find(p => p.id === _p);
+setPattern(_start || PATTERNS[0]);
+console.log("DSA Animator ready:", PATTERNS.length, "patterns,",
+  PATTERNS.reduce((n,p)=>n+p.build().length,0), "total frames");
+</script>
+</body>
+</html>
