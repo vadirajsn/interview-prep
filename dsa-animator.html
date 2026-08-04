@@ -1,112 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DSA Animator — our problems, step by step</title>
+<title>DSA Pattern Player — Interview Prep Animations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0f1419; --surface:#161d24; --surface2:#1b242d; --line:#2a3641; --line2:#3a4854;
-  --ink:#e6edf3; --mut:#9fb0bf; --faint:#71828f;
-  --a1:#7aa2f7; --a2:#9ece6a; --a3:#e0af68; --a4:#bb9af7; --a5:#7dcfff; --warn:#f7768e;
+  --bg:#0B0E14;
+  --panel:#131722;
+  --panel2:#161b28;
+  --border:#232A3B;
+  --text:#E7E6E2;
+  --dim:#8B93A7;
+  --amber:#E8A33D;
+  --teal:#4FD1C5;
+  --coral:#EF6B6B;
+  --line:#3A4256;
+  --radius:10px;
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:var(--ink);
-  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.wrap{max-width:1060px;margin:0 auto;padding:20px 16px 60px}
-code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-header{border-bottom:2px solid var(--line2);padding-bottom:14px;margin-bottom:16px}
-h1{margin:0;font-size:22px;letter-spacing:-.3px}
-.tag{display:inline-block;background:var(--surface2);border:1px solid var(--line2);color:var(--mut);
-  font-size:10.5px;text-transform:uppercase;letter-spacing:1.3px;padding:3px 10px;border-radius:20px;margin-bottom:8px}
-.lede{color:var(--mut);font-size:13.5px;margin:6px 0 0}
-kbd{background:var(--surface2);border:1px solid var(--line2);border-bottom-width:2px;border-radius:4px;
-  padding:1px 6px;font-size:11px;color:var(--mut)}
-
-.plist{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-.plist button{border:1px solid var(--line);background:var(--surface);color:var(--mut);border-radius:8px;
-  padding:7px 12px;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left}
-.plist button.on{background:var(--a1);border-color:var(--a1);color:#0b1016}
-.plist button .d{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;opacity:.8}
-
-.stage{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
-canvas{width:100%;height:auto;display:block;border-radius:8px;background:#0b1016}
-.controls{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
-.controls button{border:1px solid var(--line2);background:var(--surface2);color:var(--ink);border-radius:9px;
-  padding:10px 15px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px}
-.controls button.play{background:var(--a2);border-color:var(--a2);color:#0b1016;min-width:104px}
-.controls .step{font-size:12.5px;color:var(--faint);margin-left:auto;white-space:nowrap}
-.controls select{background:var(--surface2);color:var(--ink);border:1px solid var(--line2);border-radius:8px;
-  padding:9px 10px;font:inherit;font-size:13px}
-input[type=range]{flex:1 1 120px;accent-color:var(--a1)}
-
-.say{margin-top:12px;background:rgba(122,162,247,.07);border:1px solid rgba(122,162,247,.26);
-  border-left:3px solid var(--a1);border-radius:0 9px 9px 0;padding:11px 14px;min-height:58px;
-  font-size:14.5px;color:#cfd9e2}
-.say b{color:#fff}
-
-.codes{margin-top:12px}
-.ctabs{display:flex;gap:6px;margin-bottom:8px}
-.ctabs button{border:1px solid var(--line);background:var(--surface);color:var(--mut);border-radius:7px;
-  padding:6px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
-.ctabs button.on{background:var(--surface2);color:var(--a5);border-color:var(--line2)}
-pre{background:#0b1016;border:1px solid var(--line);border-left:3px solid var(--a1);border-radius:0 9px 9px 0;
-  padding:13px 15px;overflow-x:auto;margin:0;font-size:12.4px;line-height:1.6;color:#d6e0ea}
-.k{color:#bb9af7}.s{color:#9ece6a}.cm{color:#5c6f7e;font-style:italic}.ty{color:#7dcfff}.fn{color:#7aa2f7}.nu{color:#e0af68}
-
-@media (max-width:720px){
-  .wrap{padding:12px 10px 50px}
-  h1{font-size:18px}
-  .controls button{flex:1 1 auto}
-  .controls .step{margin-left:0;width:100%;text-align:center}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;min-height:100%;}
+.app{display:flex;min-height:100vh;}
+.sidebar{width:280px;flex-shrink:0;border-right:1px solid var(--border);padding:28px 20px;display:flex;flex-direction:column;gap:22px;}
+.brand h1{font-size:19px;margin:0 0 8px;letter-spacing:.2px;}
+.brand p{font-size:12.5px;color:var(--dim);margin:0;line-height:1.55;}
+nav.topics{display:flex;flex-direction:column;gap:5px;}
+.topic-btn{display:flex;flex-direction:column;gap:2px;text-align:left;background:transparent;border:1px solid transparent;border-radius:var(--radius);padding:9px 12px;cursor:pointer;color:var(--text);font-family:inherit;width:100%;}
+.topic-btn:hover{background:var(--panel);}
+.topic-btn.active{background:var(--panel);border-color:var(--border);}
+.topic-btn .num{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--amber);}
+.topic-btn .name{font-size:13.5px;font-weight:600;}
+.topic-btn .sub{font-size:11px;color:var(--dim);}
+.sidebar-foot{margin-top:auto;font-size:11px;color:var(--dim);line-height:1.6;border-top:1px solid var(--border);padding-top:14px;}
+.sidebar-foot kbd{font-family:'IBM Plex Mono',monospace;background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;}
+.stage{flex:1;padding:32px 40px;max-width:1080px;}
+.stage-header h2{margin:0 0 8px;font-size:23px;}
+.stage-meta{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
+.pill{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--dim);}
+.stage-blurb{color:var(--dim);font-size:13.5px;line-height:1.6;max-width:740px;margin:0 0 16px;}
+.mode-row{display:none;gap:8px;margin-bottom:16px;}
+.mode-btn{font-family:'IBM Plex Mono',monospace;font-size:11.5px;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--dim);cursor:pointer;}
+.mode-btn.active{border-color:var(--amber);color:var(--amber);background:rgba(232,163,61,.08);}
+.canvas-wrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:10px;}
+canvas{width:100%;display:block;border-radius:8px;}
+.controls{display:flex;align-items:center;gap:8px;margin:14px 0;flex-wrap:wrap;}
+.ctrl-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.ctrl-btn:hover:not(:disabled){border-color:var(--amber);color:var(--amber);}
+.ctrl-btn:disabled{opacity:.3;cursor:not-allowed;}
+.ctrl-btn.play{width:auto;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;gap:6px;}
+.speed-wrap{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:11px;font-family:'IBM Plex Mono',monospace;}
+#speedRange{accent-color:var(--amber);}
+.step-counter{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);}
+.tape-outer{position:relative;border-top:1px dashed var(--border);border-bottom:1px dashed var(--border);padding:12px 0;}
+.tape{display:flex;gap:3px;padding:0 10px;overflow-x:auto;}
+.tape::-webkit-scrollbar{height:4px;}
+.tape::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+.tape-tick{flex:0 0 auto;width:9px;height:22px;border-radius:3px;background:var(--panel2);border:1px solid var(--border);cursor:pointer;}
+.tape-tick.past{background:#1c2433;border-color:#2b3245;}
+.tape-tick.active{background:var(--amber);border-color:var(--amber);}
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px;}
+.panel-box{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.panel-box h3{margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim);}
+#frameNote{font-size:14px;line-height:1.65;color:var(--text);min-height:70px;}
+pre#codeBlock{margin:0;font-family:'IBM Plex Mono',monospace;font-size:12.3px;line-height:1.75;color:var(--dim);overflow-x:auto;white-space:pre;}
+pre#codeBlock .ln{display:block;padding:1px 8px;border-radius:4px;}
+pre#codeBlock .ln.active{background:rgba(232,163,61,.12);color:var(--amber);}
+@media (max-width:900px){
+  .app{flex-direction:column;}
+  .sidebar{width:100%;flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);padding:14px;gap:14px;}
+  .brand,.sidebar-foot{display:none;}
+  nav.topics{flex-direction:row;}
+  .topic-btn{flex-shrink:0;min-width:150px;}
+  .stage{padding:18px;}
+  .bottom-grid{grid-template-columns:1fr;}
 }
+@media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <a href="index.html" style="display:inline-block; margin-bottom:12px; color:var(--mut); text-decoration:none; font-size:12px; border:1px solid var(--border); padding:4px 10px; border-radius:12px;">← Back to Home</a>
+      <h1>DSA Pattern Player</h1>
+      <p>Eight patterns behind most data-structure interview questions, replayed one step at a time.</p>
+    </div>
+    <nav class="topics" id="topicNav"></nav>
+    <div class="sidebar-foot">
+      <div><kbd>space</kbd> play/pause · <kbd>←</kbd> <kbd>→</kbd> step</div>
+    </div>
+  </aside>
+  <main class="stage">
+    <div class="stage-header">
+      <h2 id="stageTitle"></h2>
+      <div class="stage-meta">
+        <span class="pill" id="stageTag"></span>
+        <span class="pill" id="stageLevel"></span>
+      </div>
+      <p class="stage-blurb" id="stageBlurb"></p>
+      <div class="mode-row" id="modeRow"></div>
+    </div>
 
-<header>
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:10px">
-    <span class="tag">DSA Animator</span>
-    <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;
-       color:var(--mut);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 14px;
-       background:var(--surface);transition:all 0.2s;"
-       onmouseover="this.style.color='var(--ink)';this.style.borderColor='var(--line2)'"
-       onmouseout="this.style.color='var(--mut)';this.style.borderColor='var(--line)'">
-      &#8592; Home
-    </a>
-  </div>
-  <h1>DSA Interview Animator</h1>
-  <p class="lede">38 patterns &amp; problems animated step-by-step. Click any card to jump straight to it.
-  <kbd>space</kbd> play/pause · <kbd>&larr;</kbd><kbd>&rarr;</kbd> step</p>
-</header>
+    <div class="canvas-wrap">
+      <canvas id="canvas"></canvas>
+    </div>
 
-<div class="plist" id="plist"></div>
+    <div class="controls">
+      <button class="ctrl-btn" id="btnReset" title="Reset">⟲</button>
+      <button class="ctrl-btn" id="btnPrev" title="Previous step">◁</button>
+      <button class="ctrl-btn play" id="btnPlay">▶ Play</button>
+      <button class="ctrl-btn" id="btnNext" title="Next step">▷</button>
+      <div class="speed-wrap">SPEED
+        <input type="range" id="speedRange" min="1" max="4" value="2">
+      </div>
+      <div class="step-counter" id="stepCounter"></div>
+    </div>
 
-<div class="stage">
-  <canvas id="cv" width="1000" height="460"></canvas>
-  <div class="controls">
-    <button id="restart" title="restart">&#10226;</button>
-    <button id="back">&#9665;</button>
-    <button id="play" class="play">&#9654; Play</button>
-    <button id="fwd">&#9655;</button>
-    <input type="range" id="scrub" min="0" max="0" value="0">
-    <select id="speed"><option value="1600">Slow</option><option value="1000" selected>Normal</option><option value="550">Fast</option></select>
-    <span class="step" id="stepLbl"></span>
-  </div>
+    <div class="tape-outer">
+      <div class="tape" id="tape"></div>
+    </div>
+
+    <div class="bottom-grid">
+      <div class="panel-box">
+        <h3>What's happening</h3>
+        <div id="frameNote"></div>
+      </div>
+      <div class="panel-box">
+        <h3>Kotlin</h3>
+        <pre id="codeBlock"></pre>
+      </div>
+    </div>
+  </main>
 </div>
 
-<div class="say" id="say"></div>
-
-<div class="codes">
-  <div class="ctabs">
-    <button id="tabK" class="on">Kotlin</button>
-    <button id="tabJ">Java</button>
-  </div>
-  <pre id="codeBox"></pre>
-</div>
-
-</div>
 
 <script>
 "use strict";
@@ -146,6 +175,7 @@ function pointer(ctx,geom,i,label,color,row=0){
   ctx.closePath(); ctx.fillStyle=color; ctx.fill();
   txt(ctx,label,cx,y+30+row*30,12,color);
 }
+
 
 /* =================================================================== patterns */
 const PATTERNS=[];
@@ -480,18 +510,18 @@ PATTERNS.push({
   id:"intervals", name:"Merge Intervals", d:"ours · sort by start",
   build(){
     const iv=[[1,3],[2,6],[8,10],[15,18]]; const f=[]; const merged=[];
-    f.push({iv,merged:[],idx:-1,say:"<b>[[1,3],[2,6],[8,10],[15,18]]</b>. First move, always: <b>sort by start</b>. (Already sorted here — say it anyway.) Then one pass: extend the last kept interval or start a new one."});
+    f.push({iv,merged:[],idx:-1,line:1,say:"<b>[[1,3],[2,6],[8,10],[15,18]]</b>. First move, always: <b>sort by start</b>. (Already sorted here — say it anyway.) Then one pass: extend the last kept interval or start a new one."});
     for(let i=0;i<iv.length;i++){
       const cur=iv[i]; const last=merged[merged.length-1];
       if(last && cur[0]<=last[1]){
         last[1]=Math.max(last[1],cur[1]);
-        f.push({iv,merged:merged.map(x=>[...x]),idx:i,say:`[${cur}] starts at ${cur[0]} ≤ ${last[0]===cur[0]?"":""}the last end — <b>overlap</b>. Extend to [${last[0]},${last[1]}].`});
+        f.push({iv,merged:merged.map(x=>[...x]),idx:i,line:6,say:`[${cur}] starts at ${cur[0]} ≤ ${last[0]===cur[0]?"":""}the last end — <b>overlap</b>. Extend to [${last[0]},${last[1]}].`});
       } else {
         merged.push([...cur]);
-        f.push({iv,merged:merged.map(x=>[...x]),idx:i,say:`[${cur}] starts after the last end — no overlap, keep it as a new interval.`});
+        f.push({iv,merged:merged.map(x=>[...x]),idx:i,line:7,say:`[${cur}] starts after the last end — no overlap, keep it as a new interval.`});
       }
     }
-    f.push({iv,merged:merged.map(x=>[...x]),idx:-1,say:`Result: ${JSON.stringify(merged)}. O(n log n) for the sort, O(n) after. Clarify in the room whether touching intervals like [1,4][4,5] count as overlapping — it changes ≤ vs &lt;.`});
+    f.push({iv,merged:merged.map(x=>[...x]),idx:-1,line:8,say:`Result: ${JSON.stringify(merged)}. O(n log n) for the sort, O(n) after. Clarify in the room whether touching intervals like [1,4][4,5] count as overlapping — it changes ≤ vs &lt;.`});
     return f;
   },
   render(ctx,fr){
@@ -675,16 +705,16 @@ PATTERNS.push({
   id:"twosum", name:"Two Sum", d:"arrays · hash map",
   build(){
     const a=[2,7,11,15],t=9,f=[],seen={};
-    f.push({vals:a,hi:{},seen:{},say:"<b>[2,7,11,15], target 9.</b> One pass with a map of value→index. For each element ask: <b>have I already seen its complement?</b>"});
+    f.push({vals:a,hi:{},seen:{},line:1,say:"<b>[2,7,11,15], target 9.</b> One pass with a map of value→index. For each element ask: <b>have I already seen its complement?</b>"});
     for(let i=0;i<a.length;i++){
       const need=t-a[i];
       if(seen[need]!=null){
-        f.push({vals:a,hi:{[seen[need]]:{fill:"#1f2d24",stroke:C.green,color:C.green},[i]:{fill:"#1f2d24",stroke:C.green,color:C.green}},seen:{...seen},
+        f.push({vals:a,hi:{[seen[need]]:{fill:"#1f2d24",stroke:C.green,color:C.green},[i]:{fill:"#1f2d24",stroke:C.green,color:C.green}},seen:{...seen},line:3,
           say:`At ${a[i]} the complement is ${need} — and the map says index ${seen[need]} has it. Answer: <b>[${seen[need]}, ${i}]</b>. O(n) time, O(n) space — the map buys speed with memory.`});
         break;
       }
       seen[a[i]]=i;
-      f.push({vals:a,hi:{[i]:{fill:"#26313d",stroke:C.cyan}},seen:{...seen},
+      f.push({vals:a,hi:{[i]:{fill:"#26313d",stroke:C.cyan}},seen:{...seen},line:4,
         say:`${a[i]}: complement ${need} not seen yet. Record ${a[i]}→${i} and move on.`});
     }
     return f;
@@ -821,15 +851,15 @@ PATTERNS.push({
   id:"water", name:"Container With Most Water", d:"arrays · two pointers",
   build(){
     const h=[1,8,6,2,5,4,8,3,7],f=[];let lo=0,hi=h.length-1,best=0;
-    f.push({h,lo,hi,best,say:"<b>Widest container first</b>, then shrink. Key claim: moving the <b>taller</b> wall inward can only lose width without gaining height — so always move the shorter one."});
+    f.push({h,lo,hi,best,line:1,say:"<b>Widest container first</b>, then shrink. Key claim: moving the <b>taller</b> wall inward can only lose width without gaining height — so always move the shorter one."});
     while(lo<hi){
       const area=(hi-lo)*Math.min(h[lo],h[hi]);
       if(area>best)best=area;
       const moveLo=h[lo]<h[hi];
-      f.push({h,lo,hi,best,say:`Area = ${hi-lo} × min(${h[lo]},${h[hi]}) = <b>${area}</b>${area===best?" (best so far)":""}. ${moveLo?`Left wall ${h[lo]} is shorter — move lo.`:`Right wall ${h[hi]} is shorter — move hi.`}`});
+      f.push({h,lo,hi,best,line:3,say:`Area = ${hi-lo} × min(${h[lo]},${h[hi]}) = <b>${area}</b>${area===best?" (best so far)":""}. ${moveLo?`Left wall ${h[lo]} is shorter — move lo.`:`Right wall ${h[hi]} is shorter — move hi.`}`});
       if(moveLo)lo++;else hi--;
     }
-    f.push({h,lo,hi,best,say:`Pointers met. Best area: <b>${best}</b>. O(n) — each pointer only ever moves inward.`});
+    f.push({h,lo,hi,best,line:5,say:`Pointers met. Best area: <b>${best}</b>. O(n) — each pointer only ever moves inward.`});
     return f;
   },
   render(ctx,fr){
@@ -1028,10 +1058,10 @@ PATTERNS.push({
   id:"bsearch", name:"Binary Search", d:"arrays · halving",
   build(){
     const a=[-1,0,3,5,9,12],t=9,f=[];let lo=0,hi=5;
-    f.push({a,lo,hi,mid:-1,say:"<b>Sorted array, target 9.</b> Loop while lo ≤ hi — when they're equal that last cell is still a real candidate."});
+    f.push({a,lo,hi,mid:-1,line:1,say:"<b>Sorted array, target 9.</b> Loop while lo ≤ hi — when they're equal that last cell is still a real candidate."});
     while(lo<=hi){
       const mid=lo+((hi-lo)>>1);
-      f.push({a,lo,hi,mid,say:`mid = lo + (hi−lo)/2 = ${mid} → a[${mid}] = ${a[mid]}. ${a[mid]===t?"<b>Found it.</b>":a[mid]<t?"Too small — search right half.":"Too big — search left half."} (Writing (lo+hi)/2 overflows in Java/Kotlin.)`});
+      f.push({a,lo,hi,mid,line:4,say:`mid = lo + (hi−lo)/2 = ${mid} → a[${mid}] = ${a[mid]}. ${a[mid]===t?"<b>Found it.</b>":a[mid]<t?"Too small — search right half.":"Too big — search left half."} (Writing (lo+hi)/2 overflows in Java/Kotlin.)`});
       if(a[mid]===t)break;
       if(a[mid]<t)lo=mid+1;else hi=mid-1;
     }
@@ -1235,13 +1265,13 @@ PATTERNS.push({
   id:"parens", name:"Valid Parentheses", d:"stack · matching",
   build(){
     const s="({[]})".split(""),f=[];const st=[];const pairs={")":"(","]":"[","}":"{"};
-    f.push({s,i:-1,st:[],say:"<b>\"({[]})\".</b> Openers push; a closer must match the most recent unresolved opener — which is exactly what a stack's top is."});
+    f.push({s,i:-1,st:[],line:1,say:"<b>\"({[]})\".</b> Openers push; a closer must match the most recent unresolved opener — which is exactly what a stack's top is."});
     for(let i=0;i<s.length;i++){
-      if("([{".includes(s[i])){st.push(s[i]);f.push({s,i,st:[...st],say:`'${s[i]}' is an opener — push. Stack: [${st.join(" ")}].`});}
+      if("([{".includes(s[i])){st.push(s[i]);f.push({s,i,st:[...st],line:4,say:`'${s[i]}' is an opener — push. Stack: [${st.join(" ")}].`});}
       else{const top=st.pop();
-        f.push({s,i,st:[...st],say:`'${s[i]}' closes — pop '${top}' ${pairs[s[i]]===top?"— <b>matches</b>.":"— MISMATCH, return false."} Stack: [${st.join(" ")}].`});}
+        f.push({s,i,st:[...st],line:5,say:`'${s[i]}' closes — pop '${top}' ${pairs[s[i]]===top?"— <b>matches</b>.":"— MISMATCH, return false."} Stack: [${st.join(" ")}].`});}
     }
-    f.push({s,i:-1,st:[...st],say:"End of string with an <b>empty stack</b> → valid. The two failure modes: mismatch mid-way, or leftovers at the end."});
+    f.push({s,i:-1,st:[...st],line:7,say:"End of string with an <b>empty stack</b> → valid. The two failure modes: mismatch mid-way, or leftovers at the end."});
     return f;
   },
   render(ctx,fr){
@@ -1449,14 +1479,14 @@ PATTERNS.push({
     const vals=[1,2,3,4],f=[];
     let links=[1,2,3,-1];let prev=-1,node=0;
     const snap=(say,extra={})=>f.push({vals,links:[...links],prev,node,say,...extra});
-    snap("<b>1→2→3→4.</b> Three pointers: prev, node, next. Save next BEFORE overwriting the pointer — lose it and the rest of the list is gone.");
+    snap("<b>1→2→3→4.</b> Three pointers: prev, node, next. Save next BEFORE overwriting the pointer — lose it and the rest of the list is gone.", {line: 1});
     while(node!==-1){
       const next=links[node];
       links[node]=prev;
-      snap(`node ${vals[node]}: save next, then point ${vals[node]}.next back to ${prev===-1?"null":vals[prev]}. Advance prev and node.`);
+      snap(`node ${vals[node]}: save next, then point ${vals[node]}.next back to ${prev===-1?"null":vals[prev]}. Advance prev and node.`, {line: 5});
       prev=node;node=next;
     }
-    snap("node is null — done. <b>prev is the new head</b> (4→3→2→1). O(n), O(1). Returning the old head instead of prev is the classic slip.");
+    snap("node is null — done. <b>prev is the new head</b> (4→3→2→1). O(n), O(1). Returning the old head instead of prev is the classic slip.", {line: 9});
     return f;
   },
   render(ctx,fr){
@@ -1643,18 +1673,18 @@ PATTERNS.push({
     const v=[3,9,20,null,null,15,7],f=[];
     const kids=i=>[2*i+1,2*i+2].filter(k=>k<7&&v[k]!=null);
     let q=[0];const out=[];
-    f.push({v,q:[...q],out:[],hi:{},say:"<b>BFS with a queue.</b> The trick for per-level grouping: snapshot the queue size at the start of each level — exactly that many polls belong to this level."});
+    f.push({v,q:[...q],out:[],hi:{},line:1,say:"<b>BFS with a queue.</b> The trick for per-level grouping: snapshot the queue size at the start of each level — exactly that many polls belong to this level."});
     while(q.length){
       const size=q.length,level=[];
-      f.push({v,q:[...q],out:out.map(x=>[...x]),hi:Object.fromEntries(q.map(i=>[i,{stroke:C.cyan}])),say:`Level starts: queue holds ${size} node(s) — snapshot size = ${size}.`});
+      f.push({v,q:[...q],out:out.map(x=>[...x]),hi:Object.fromEntries(q.map(i=>[i,{stroke:C.cyan}])),line:3,say:`Level starts: queue holds ${size} node(s) — snapshot size = ${size}.`});
       for(let s=0;s<size;s++){
         const n=q.shift();level.push(v[n]);
         kids(n).forEach(k=>q.push(k));
-        f.push({v,q:[...q],out:out.map(x=>[...x]),hi:{[n]:{fill:"#1f2d24",stroke:C.green}},say:`Poll ${v[n]}, add its children. Level so far: [${level.join(", ")}].`});
+        f.push({v,q:[...q],out:out.map(x=>[...x]),hi:{[n]:{fill:"#1f2d24",stroke:C.green}},line:8,say:`Poll ${v[n]}, add its children. Level so far: [${level.join(", ")}].`});
       }
       out.push(level);
     }
-    f.push({v,q:[],out:out.map(x=>[...x]),hi:{},say:`Levels: ${JSON.stringify(out)}. Without the size snapshot everything merges into one flat list — that's the bug interviewers watch for.`});
+    f.push({v,q:[],out:out.map(x=>[...x]),hi:{},line:11,say:`Levels: ${JSON.stringify(out)}. Without the size snapshot everything merges into one flat list — that's the bug interviewers watch for.`});
     return f;
   },
   render(ctx,fr){
@@ -1829,18 +1859,18 @@ PATTERNS.push({
   build(){
     const g=[["1","1","0"],["1","0","0"],["0","0","1"]];const f=[];let count=0;
     const st=g.map(r=>r.map(c=>c==="1"?1:0)); // 1 land, 0 water, 2 sunk
-    const snap=(say,cur)=>f.push({st:st.map(r=>[...r]),count,cur,say});
-    snap("<b>Scan every cell.</b> On unvisited land: count it, then flood-fill (sink) the whole island so it's never counted again. Marking in place — no separate visited[][] needed.");
+    const snap=(say,cur,extra={})=>f.push({st:st.map(r=>[...r]),count,cur,say,...extra});
+    snap("<b>Scan every cell.</b> On unvisited land: count it, then flood-fill (sink) the whole island so it's never counted again. Marking in place — no separate visited[][] needed.", null, {line: 2});
     const sink=(r,c)=>{
       if(r<0||r>2||c<0||c>2||st[r][c]!==1)return;
       st[r][c]=2;
-      snap(`Sink (${r},${c}) and spread to its neighbours.`,[r,c]);
+      snap(`Sink (${r},${c}) and spread to its neighbours.`,[r,c], {line: 9});
       sink(r+1,c);sink(r-1,c);sink(r,c+1);sink(r,c-1);
     };
     for(let r=0;r<3;r++)for(let c=0;c<3;c++){
-      if(st[r][c]===1){count++;snap(`Unvisited land at (${r},${c}) — island #${count}. Flood-fill it.`,[r,c]);sink(r,c);}
+      if(st[r][c]===1){count++;snap(`Unvisited land at (${r},${c}) — island #${count}. Flood-fill it.`,[r,c], {line: 4});sink(r,c);}
     }
-    snap(`Done: <b>${count} islands</b>. O(m·n) — every cell touched a constant number of times. DFS recursion depth can blow the stack on huge grids; mention the BFS alternative.`);
+    snap(`Done: <b>${count} islands</b>. O(m·n) — every cell touched a constant number of times. DFS recursion depth can blow the stack on huge grids; mention the BFS alternative.`, null, {line: 5});
     return f;
   },
   render(ctx,fr){
@@ -2118,65 +2148,189 @@ PATTERNS.push(story("palpart","Palindrome Partitioning II","narrated · two DP t
 }
 <span class="k">return</span> cuts[n-<span class="nu">1</span>];`));
 
-/* =================================================================== player */
-const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
-let cur=PATTERNS[0], frames=cur.build(), idx=0, playing=false, timer=null, lang="k";
 
-function el(id){ return document.getElementById(id); }
 
-function drawFrame(){
-  ctx.clearRect(0,0,cv.width,cv.height);
-  ctx.fillStyle=C.bg; ctx.fillRect(0,0,cv.width,cv.height);
-  const fr=frames[Math.min(idx,frames.length-1)];
-  cur.render(ctx,fr);
-  el("say").innerHTML=fr.say;
-  el("stepLbl").textContent=`step ${idx+1} / ${frames.length}`;
-  el("scrub").max=frames.length-1;
-  el("scrub").value=idx;
-}
+/* =================================================================== app logic =================================================================== */
+const cv = document.getElementById("canvas");
+const ctx = cv.getContext("2d");
+const btnReset = document.getElementById("btnReset");
+const btnPrev = document.getElementById("btnPrev");
+const btnPlay = document.getElementById("btnPlay");
+const btnNext = document.getElementById("btnNext");
+const speedRange = document.getElementById("speedRange");
+const stepCounter = document.getElementById("stepCounter");
+const tape = document.getElementById("tape");
+const frameNote = document.getElementById("frameNote");
+const codeBlock = document.getElementById("codeBlock");
+const topicNav = document.getElementById("topicNav");
 
-function setPattern(p){
-  cur=p; frames=p.build(); idx=0; stop();
-  el("plist").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.id===p.id));
-  el("codeBox").innerHTML = lang==="k" ? p.kotlin : p.java;
-  drawFrame();
-}
-function stop(){ playing=false; clearInterval(timer); timer=null; el("play").innerHTML="&#9654; Play"; }
-function play(){
-  if(playing){ stop(); return; }
-  if(idx>=frames.length-1) idx=0;
-  playing=true; el("play").innerHTML="&#10074;&#10074; Pause";
-  timer=setInterval(()=>{
-    if(idx<frames.length-1){ idx++; drawFrame(); } else stop();
-  }, +el("speed").value);
-}
+let cur = null;
+let frames = [];
+let fidx = 0;
+let playing = false;
+let playTimer = null;
+let codeLines = [];
 
-el("plist").innerHTML=PATTERNS.map((p,i)=>
-  `<button data-id="${p.id}">${String(i+1).padStart(2,"0")} ${p.name}<span class="d">${p.d}</span></button>`).join("");
-el("plist").querySelectorAll("button").forEach(b=>
-  b.onclick=()=>setPattern(PATTERNS.find(p=>p.id===b.dataset.id)));
-
-el("play").onclick=play;
-el("fwd").onclick=()=>{ stop(); if(idx<frames.length-1){idx++; drawFrame();} };
-el("back").onclick=()=>{ stop(); if(idx>0){idx--; drawFrame();} };
-el("restart").onclick=()=>{ stop(); idx=0; drawFrame(); };
-el("scrub").oninput=e=>{ stop(); idx=+e.target.value; drawFrame(); };
-el("speed").onchange=()=>{ if(playing){ stop(); play(); } };
-el("tabK").onclick=()=>{ lang="k"; el("tabK").classList.add("on"); el("tabJ").classList.remove("on"); el("codeBox").innerHTML=cur.kotlin; };
-el("tabJ").onclick=()=>{ lang="j"; el("tabJ").classList.add("on"); el("tabK").classList.remove("on"); el("codeBox").innerHTML=cur.java; };
-document.addEventListener("keydown",e=>{
-  if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT") return;
-  if(e.code==="Space"){ e.preventDefault(); play(); }
-  if(e.key==="ArrowRight"){ stop(); if(idx<frames.length-1){idx++; drawFrame();} }
-  if(e.key==="ArrowLeft"){ stop(); if(idx>0){idx--; drawFrame();} }
+// Populate topics
+topicNav.innerHTML = "";
+PATTERNS.forEach((p, i) => {
+  const btn = document.createElement("button");
+  btn.className = "topic-btn";
+  btn.innerHTML = `<span class="num">\${(i+1).toString().padStart(2,'0')}</span><span class="name">\${p.name}</span><span class="sub">\${p.d}</span>`;
+  btn.onclick = () => loadTopic(i);
+  topicNav.appendChild(btn);
 });
 
-// Support deep-linking via ?pattern=<id>
-const _p = new URLSearchParams(window.location.search).get("pattern");
-const _start = _p && PATTERNS.find(p => p.id === _p);
-setPattern(_start || PATTERNS[0]);
-console.log("DSA Animator ready:", PATTERNS.length, "patterns,",
-  PATTERNS.reduce((n,p)=>n+p.build().length,0), "total frames");
+function loadTopic(idx) {
+  document.querySelectorAll(".topic-btn").forEach((b, i) => b.classList.toggle("active", i === idx));
+  cur = PATTERNS[idx];
+  document.getElementById("stageTitle").textContent = cur.name;
+  document.getElementById("stageTag").textContent = cur.d;
+  document.getElementById("stageLevel").textContent = "Algorithm";
+  
+  if(cur.build) {
+      frames = cur.build();
+  } else {
+      frames = [{say:"No build function yet"}];
+  }
+  
+  // Format code
+  if(cur.kotlin) {
+      // split and wrap
+      const rawLines = cur.kotlin.split("\n");
+      codeLines = rawLines;
+      codeBlock.innerHTML = rawLines.map((l, i) => `<span class="ln" id="ln-\${i+1}">\${l || ' '}</span>`).join("\n");
+  } else {
+      codeBlock.innerHTML = "No code available.";
+  }
+  
+  fidx = 0;
+  pause();
+  updateTapeUI();
+  draw();
+  
+  // Update URL
+  const url = new URL(window.location);
+  url.searchParams.set('pattern', cur.id);
+  window.history.replaceState({}, '', url);
+}
+
+function updateTapeUI() {
+  tape.innerHTML = "";
+  frames.forEach((_, i) => {
+    const tick = document.createElement("div");
+    tick.className = "tape-tick";
+    tick.onclick = () => { fidx = i; draw(); pause(); };
+    tape.appendChild(tick);
+  });
+}
+
+function draw() {
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, cv.width, cv.height);
+  if (!frames.length) return;
+  const fr = frames[fidx];
+  
+  if(cur.render) {
+      ctx.save();
+      cur.render(ctx, fr);
+      ctx.restore();
+  }
+  
+  // Update UI
+  stepCounter.textContent = `Step \${fidx+1} / \${frames.length}`;
+  frameNote.innerHTML = fr.say || fr.note || "";
+  
+  // Update Tape
+  const ticks = tape.children;
+  for(let i=0; i<ticks.length; i++){
+    ticks[i].className = "tape-tick" + (i < fidx ? " past" : (i === fidx ? " active" : ""));
+  }
+  
+  // Scroll tape
+  if(ticks[fidx]) ticks[fidx].scrollIntoView({behavior:"smooth", block:"nearest", inline:"center"});
+  
+  // Code highlight
+  document.querySelectorAll("#codeBlock .ln").forEach(el => el.classList.remove("active"));
+  if (fr.line) {
+    const activeLine = document.getElementById("ln-" + fr.line);
+    if(activeLine) {
+       activeLine.classList.add("active");
+       activeLine.scrollIntoView({behavior:"smooth", block:"nearest"});
+    }
+  }
+}
+
+function next() {
+  if (fidx < frames.length - 1) {
+    fidx++; draw();
+  } else {
+    pause();
+  }
+}
+
+function prev() {
+  if (fidx > 0) {
+    fidx--; draw();
+  }
+}
+
+function togglePlay() {
+  if (playing) pause();
+  else play();
+}
+
+function play() {
+  if (fidx >= frames.length - 1) fidx = 0;
+  playing = true;
+  btnPlay.innerHTML = "⏸ Pause";
+  btnPlay.style.background = C.purple;
+  btnPlay.style.borderColor = C.purple;
+  btnPlay.style.color = "#000";
+  loop();
+}
+
+function pause() {
+  playing = false;
+  btnPlay.innerHTML = "▶ Play";
+  btnPlay.style.background = C.panel;
+  btnPlay.style.borderColor = C.border;
+  btnPlay.style.color = C.text;
+  clearTimeout(playTimer);
+}
+
+function loop() {
+  if (!playing) return;
+  draw();
+  if (fidx < frames.length - 1) {
+    fidx++;
+    let ms = parseInt(speedRange.value);
+    let delay = ms === 1 ? 1200 : ms === 2 ? 800 : ms === 3 ? 400 : 150;
+    playTimer = setTimeout(loop, delay);
+  } else {
+    pause();
+  }
+}
+
+btnReset.onclick = () => { fidx=0; draw(); pause(); };
+btnPrev.onclick = () => { prev(); pause(); };
+btnNext.onclick = () => { next(); pause(); };
+btnPlay.onclick = togglePlay;
+window.onkeydown = e => {
+  if(e.key===" ") { e.preventDefault(); togglePlay(); }
+  if(e.key==="ArrowRight") { if(!playing) next(); }
+  if(e.key==="ArrowLeft") { if(!playing) prev(); }
+};
+
+// Check URL params
+const params = new URLSearchParams(window.location.search);
+const pId = params.get('pattern') || params.get('topic');
+let initIdx = 0;
+if(pId) {
+    const found = PATTERNS.findIndex(p => p.id === pId);
+    if(found >= 0) initIdx = found;
+}
+loadTopic(initIdx);
 </script>
 </body>
 </html>
