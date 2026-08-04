@@ -7,7 +7,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 # Copy site files into nginx's html directory
 COPY index.html /usr/share/nginx/html/index.html
 COPY dsa-animator.html /usr/share/nginx/html/dsa-animator.html
-COPY system-design.html /usr/share/nginx/html/system-design.html
+COPY system-design-interview-prep.html /usr/share/nginx/html/system-design-interview-prep.html
 
 # Copy nginx config template
 COPY nginx.conf /etc/nginx/nginx.conf.template
