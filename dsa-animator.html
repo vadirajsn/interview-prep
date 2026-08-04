@@ -2176,7 +2176,7 @@ topicNav.innerHTML = "";
 PATTERNS.forEach((p, i) => {
   const btn = document.createElement("button");
   btn.className = "topic-btn";
-  btn.innerHTML = `<span class="num">\${(i+1).toString().padStart(2,'0')}</span><span class="name">\${p.name}</span><span class="sub">\${p.d}</span>`;
+  btn.innerHTML = `<span class="num">${(i+1).toString().padStart(2,'0')}</span><span class="name">${p.name}</span><span class="sub">${p.d}</span>`;
   btn.onclick = () => loadTopic(i);
   topicNav.appendChild(btn);
 });
@@ -2199,7 +2199,7 @@ function loadTopic(idx) {
       // split and wrap
       const rawLines = cur.kotlin.split("\n");
       codeLines = rawLines;
-      codeBlock.innerHTML = rawLines.map((l, i) => `<span class="ln" id="ln-\${i+1}">\${l || ' '}</span>`).join("\n");
+      codeBlock.innerHTML = rawLines.map((l, i) => `<span class="ln" id="ln-${i+1}">${l || ' '}</span>`).join("\n");
   } else {
       codeBlock.innerHTML = "No code available.";
   }
@@ -2238,7 +2238,7 @@ function draw() {
   }
   
   // Update UI
-  stepCounter.textContent = `Step \${fidx+1} / \${frames.length}`;
+  stepCounter.textContent = `Step ${fidx+1} / ${frames.length}`;
   frameNote.innerHTML = fr.say || fr.note || "";
   
   // Update Tape
