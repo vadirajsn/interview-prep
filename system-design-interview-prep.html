@@ -1,1007 +1,1654 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Design - Reference</title>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #0f1419;
-            --surface: #161d24;
-            --surface2: #1b242d;
-            --line: #2a3641;
-            --line2: #3a4854;
-            --ink: #e6edf3;
-            --mut: #9fb0bf;
-            --faint: #71828f;
-            --a1: #7aa2f7;
-            --a2: #9ece6a;
-            --a3: #e0af68;
-            --a4: #bb9af7;
-            --a5: #7dcfff;
-            --warn: #f7768e;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design — Interview Blueprint</title>
+<style>
+  :root{
+    --bg:#0B1D33;
+    --bg2:#0E2440;
+    --grid:#16304F;
+    --ink:#E8EDF4;
+    --ink-dim:#8FA5C0;
+    --amber:#FFB020;
+    --cyan:#5EEAD4;
+    --red:#FF6B6B;
+    --panel:#0F2645;
+    --panel-border:#1F3F66;
+    --mono:'JetBrains Mono','SF Mono',Consolas,monospace;
+    --sans:'Inter',-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0/28px 28px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/28px 28px,
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    min-height:100vh;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+  /* ===== Header ===== */
+  header{
+    padding:28px 32px 20px;
+    border-bottom:1px solid var(--panel-border);
+    background:rgba(11,29,51,0.85);
+    backdrop-filter:blur(6px);
+    position:sticky; top:0; z-index:50;
+  }
+  .brand{
+    display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+  }
+  .brand .mark{
+    font-family:var(--mono); font-size:13px; color:var(--amber);
+    border:1px solid var(--amber); padding:2px 8px; border-radius:3px;
+    letter-spacing:0.08em;
+  }
+  h1{
+    font-size:26px; margin:6px 0 4px; font-weight:700; letter-spacing:-0.01em;
+  }
+  header p.sub{ margin:0; color:var(--ink-dim); font-size:14px; font-family:var(--mono);}
 
-        body {
-            font-family: 'Outfit', -apple-system, sans-serif;
-            background-color: var(--bg);
-            color: var(--ink);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
+  /* ===== Layout ===== */
+  .shell{ display:grid; grid-template-columns:250px 1fr; min-height:calc(100vh - 96px);}
+  nav{
+    border-right:1px solid var(--panel-border);
+    padding:20px 12px;
+    position:sticky; top:96px; align-self:start;
+    max-height:calc(100vh - 96px); overflow-y:auto;
+  }
+  nav .grp-label{
+    font-family:var(--mono); font-size:11px; color:var(--ink-dim);
+    text-transform:uppercase; letter-spacing:0.1em; margin:16px 8px 6px;
+  }
+  nav button{
+    display:block; width:100%; text-align:left;
+    background:transparent; border:none; color:var(--ink-dim);
+    font-family:var(--sans); font-size:14px; padding:9px 10px;
+    border-radius:6px; cursor:pointer; margin-bottom:2px;
+    border-left:2px solid transparent;
+    transition:background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  nav button .num{ font-family:var(--mono); color:var(--cyan); margin-right:8px; font-size:12px;}
+  nav button:hover{ background:var(--panel); color:var(--ink);}
+  nav button.active{
+    background:var(--panel); color:var(--ink); border-left-color:var(--amber);
+    font-weight:600;
+  }
 
-        /* Sidebar */
-        .sidebar {
-            width: 280px;
-            background-color: var(--surface);
-            border-right: 1px solid var(--line);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-        }
+  main{ padding:32px 40px 80px; max-width:980px;}
+  section.topic{ display:none; }
+  section.topic.active{ display:block; animation:fadein 0.25s ease; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
 
-        .sidebar-header {
-            padding: 24px 20px;
-            border-bottom: 1px solid var(--line);
-        }
+  .topic-head{ margin-bottom:18px; }
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; color:var(--amber);
+    letter-spacing:0.08em; text-transform:uppercase;
+  }
+  .topic h2{ font-size:28px; margin:4px 0 8px; }
+  .topic .dek{ color:var(--ink-dim); font-size:15px; line-height:1.5; max-width:640px;}
 
-        .nav-links {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
+  .stage{
+    background:var(--panel); border:1px solid var(--panel-border);
+    border-radius:10px; padding:18px; margin:20px 0 8px;
+    position:relative;
+  }
+  .stage-controls{
+    display:flex; align-items:center; gap:10px; margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    font-family:var(--mono); font-size:12px; background:var(--bg2);
+    color:var(--cyan); border:1px solid var(--panel-border);
+    padding:7px 14px; border-radius:6px; cursor:pointer;
+    letter-spacing:0.03em; transition:all .15s;
+  }
+  .btn:hover{ border-color:var(--cyan); background:#123055; }
+  .btn.primary{ background:var(--amber); color:#111; border-color:var(--amber); font-weight:700;}
+  .btn.primary:hover{ filter:brightness(1.08); }
+  .status-line{
+    font-family:var(--mono); font-size:12px; color:var(--ink-dim);
+    margin-left:auto;
+  }
+  svg{ display:block; width:100%; height:auto; }
 
-        .nav-pill {
-            font-size: 12px;
-            text-decoration: none;
-            color: var(--mut);
-            background: var(--surface2);
-            padding: 4px 10px;
-            border-radius: 12px;
-            border: 1px solid var(--line);
-            transition: all 0.2s ease;
-        }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; font-family:var(--mono); font-size:11px; color:var(--ink-dim);}
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .dot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
 
-        .nav-pill:hover {
-            color: var(--ink);
-            border-color: var(--line2);
-            background: var(--line);
-        }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:22px; }
+  @media (max-width:760px){ .grid2{grid-template-columns:1fr;} .shell{grid-template-columns:1fr;} nav{position:relative; top:0; max-height:none; border-right:none; border-bottom:1px solid var(--panel-border);} }
 
-        .sidebar h1 {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: var(--ink);
-        }
+  .card{
+    background:var(--bg2); border:1px solid var(--panel-border);
+    border-radius:8px; padding:16px 18px;
+  }
+  .card h3{ margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:0.06em; color:var(--cyan); font-family:var(--mono);}
+  .card ul{ margin:0; padding-left:18px; color:var(--ink); font-size:14px; line-height:1.65;}
+  .card ul li::marker{ color:var(--amber); }
 
-        .sidebar p {
-            font-size: 13px;
-            color: var(--faint);
-        }
+  .talk-track{
+    margin-top:22px; border-top:1px dashed var(--panel-border); padding-top:16px;
+  }
+  .talk-track h3{ font-family:var(--mono); font-size:13px; color:var(--amber); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:10px;}
+  .talk-track ol{ margin:0; padding-left:20px; color:var(--ink); font-size:14.5px; line-height:1.7;}
+  .talk-track ol li::marker{ color:var(--cyan); font-family:var(--mono); }
 
-        .topic-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px 10px;
-        }
+  .pill-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+  .pill{
+    font-family:var(--mono); font-size:11px; color:var(--ink-dim);
+    border:1px solid var(--panel-border); padding:4px 10px; border-radius:999px;
+  }
 
-        .topic-btn {
-            width: 100%;
-            text-align: left;
-            background: transparent;
-            border: 1px solid transparent;
-            color: var(--mut);
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 4px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+  footer{
+    border-top:1px solid var(--panel-border); padding:20px 40px;
+    color:var(--ink-dim); font-family:var(--mono); font-size:12px;
+  }
 
-        .topic-btn:hover {
-            background: var(--surface2);
-            color: var(--ink);
-        }
-
-        .topic-btn.active {
-            background: var(--surface2);
-            border-color: var(--line);
-            color: var(--ink);
-        }
-
-        .topic-name {
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .topic-cat {
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: var(--bg);
-            color: var(--faint);
-            font-family: 'IBM Plex Mono', monospace;
-        }
-
-        /* Main Area */
-        .main-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .main-header {
-            padding: 24px 40px;
-            border-bottom: 1px solid var(--line);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(15, 20, 25, 0.8);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .main-title {
-            font-size: 28px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .cat-badge {
-            font-size: 12px;
-            font-family: 'IBM Plex Mono', monospace;
-            padding: 4px 8px;
-            border-radius: 4px;
-            background: var(--surface2);
-            border: 1px solid var(--line);
-            color: var(--a5);
-        }
-
-        .content {
-            padding: 40px;
-            max-width: 1000px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        /* Canvas Section */
-        .canvas-container {
-            background: #0b1016;
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 24px;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: auto;
-        }
-
-        .controls {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 20px;
-            background: var(--surface);
-            border-top: 1px solid var(--line);
-        }
-
-        .step-info {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 13px;
-            color: var(--mut);
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn {
-            background: var(--surface2);
-            border: 1px solid var(--line);
-            color: var(--ink);
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 13px;
-            transition: all 0.2s;
-        }
-
-        .btn:hover:not(:disabled) {
-            background: var(--line);
-            border-color: var(--line2);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .explanation {
-            font-size: 15px;
-            line-height: 1.5;
-            color: var(--ink);
-            padding: 16px 20px;
-            background: rgba(122, 162, 247, 0.1);
-            border-left: 3px solid var(--a1);
-            margin-bottom: 40px;
-            border-radius: 0 8px 8px 0;
-        }
-
-        /* Info Grid */
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 40px;
-        }
-
-        .panel {
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            padding: 24px;
-        }
-
-        .panel h3 {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: var(--a5);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .panel ul {
-            list-style: none;
-        }
-
-        .panel li {
-            position: relative;
-            padding-left: 20px;
-            margin-bottom: 12px;
-            font-size: 14px;
-            line-height: 1.5;
-            color: var(--mut);
-        }
-
-        .panel li::before {
-            content: "•";
-            position: absolute;
-            left: 0;
-            color: var(--a1);
-            font-weight: bold;
-        }
-
-        .numbers-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .number-pill {
-            background: var(--surface2);
-            border: 1px solid var(--line);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 13px;
-            color: var(--a3);
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .number-pill span {
-            font-family: 'Outfit', sans-serif;
-            font-size: 11px;
-            color: var(--faint);
-            margin-top: 2px;
-        }
-
-        /* Tradeoffs */
-        .tradeoffs {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 40px;
-        }
-
-        .tradeoff {
-            flex: 1;
-            padding: 16px;
-            border-radius: 8px;
-            border: 1px solid var(--line);
-            font-size: 14px;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .tradeoff.gain {
-            background: rgba(158, 206, 106, 0.05);
-            border-color: rgba(158, 206, 106, 0.2);
-        }
-
-        .tradeoff.cost {
-            background: rgba(247, 118, 142, 0.05);
-            border-color: rgba(247, 118, 142, 0.2);
-        }
-        
-        .icon-gain { color: var(--a2); font-weight: bold; }
-        .icon-cost { color: var(--warn); font-weight: bold; }
-
-        /* Questions */
-        .questions {
-            margin-bottom: 60px;
-        }
-
-        .q-item {
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-bottom: 12px;
-            font-size: 14px;
-            color: var(--mut);
-        }
-
-        .q-item strong {
-            color: var(--ink);
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--faint); }
-    </style>
+  /* small utility text styles used inside svgs via foreignObject not needed; use <text> */
+  text{ font-family:var(--mono); }
+</style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <div class="nav-links">
-                <a href="index.html" class="nav-pill">← Home</a>
-                <a href="dsa-animator.html" class="nav-pill">DSA Animator →</a>
-            </div>
-            <h1>System Design</h1>
-            <p>Senior SWE Interview Reference</p>
-        </div>
-        <div class="topic-list" id="topicList">
-            <!-- Topics rendered here -->
-        </div>
-    </div>
+<header>
+  <div class="brand">
+    <span class="mark">SD // PREP</span>
+  </div>
+  <h1>System Design — Interview Blueprint</h1>
+  <p class="sub">10 patterns, animated · click a topic, hit Run</p>
+</header>
 
-    <div class="main-area">
-        <div class="main-header">
-            <div class="main-title">
-                <span id="titleText">Topic Name</span>
-                <span class="cat-badge" id="catBadge">Category</span>
-            </div>
-        </div>
+<div class="shell">
+  <nav id="nav"></nav>
+  <main id="main"></main>
+</div>
 
-        <div class="content">
-            <div class="canvas-container">
-                <canvas id="canvas" width="900" height="340"></canvas>
-                <div class="controls">
-                    <div class="step-info" id="stepInfo">Step 1 of 5</div>
-                    <div class="btn-group">
-                        <button class="btn" id="btnPrev">← Prev</button>
-                        <button class="btn" id="btnNext">Next →</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="explanation" id="explanation">
-                Explanation text goes here.
-            </div>
-
-            <div class="tradeoffs" id="tradeoffs">
-                <div class="tradeoff gain">
-                    <span class="icon-gain">✓</span>
-                    <div>
-                        <strong style="color:var(--ink)">Gain</strong><br>
-                        <span id="tradeGain" style="color:var(--mut)">...</span>
-                    </div>
-                </div>
-                <div class="tradeoff cost">
-                    <span class="icon-cost">✗</span>
-                    <div>
-                        <strong style="color:var(--ink)">Cost</strong><br>
-                        <span id="tradeCost" style="color:var(--mut)">...</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="info-grid">
-                <div class="panel">
-                    <h3>Key Concepts</h3>
-                    <ul id="conceptsList">
-                    </ul>
-                </div>
-                <div class="panel">
-                    <h3>Key Numbers</h3>
-                    <div class="numbers-list" id="numbersList">
-                    </div>
-                </div>
-            </div>
-
-            <div class="questions" id="questions">
-                <h3 style="margin-bottom:16px;font-size:18px;">Common Interview Questions</h3>
-                <div id="qList"></div>
-            </div>
-        </div>
-    </div>
+<footer>Built for interview prep — walk through the animation, then rehearse the talk track out loud.</footer>
 
 <script>
-const BG='#0b1016', SURF='#161d24', SURF2='#1b242d';
-const BLUE='#7aa2f7', GREEN='#9ece6a', AMBER='#e0af68', PURPLE='#bb9af7', CYAN='#7dcfff', RED='#f7768e', DIM='#71828f', INK='#e6edf3', LINE='#3a4854';
+// ============ BODIES: each returns HTML string incl. inline SVG + controls ============
+const BODIES = {
 
-function rbox(ctx,x,y,w,h,fill,stroke,r=10){
-    ctx.beginPath(); ctx.roundRect(x,y,w,h,r);
-    ctx.fillStyle=fill; ctx.fill();
-    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();}
-}
-function lbl(ctx,s,x,y,size=13,color=INK,align='center',bold=false){
-    ctx.fillStyle=color;
-    ctx.font=(bold?'600 ':'400 ')+size+'px "Outfit",-apple-system,sans-serif';
-    ctx.textAlign=align; ctx.textBaseline='middle';
-    ctx.fillText(s,x,y);
-}
-function arrow(ctx,x1,y1,x2,y2,color=DIM,label=''){
-    ctx.save();
-    ctx.strokeStyle=color; ctx.lineWidth=1.8;
-    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-    const ang=Math.atan2(y2-y1,x2-x1);
-    ctx.fillStyle=color;
-    ctx.translate(x2,y2); ctx.rotate(ang);
-    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-9,-4); ctx.lineTo(-9,4); ctx.closePath(); ctx.fill();
-    ctx.restore();
-    if(label){
-        const mx=(x1+x2)/2, my=(y1+y2)/2 - 12;
-        ctx.fillStyle=color;
-        ctx.font='11px "IBM Plex Mono",monospace';
-        ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText(label,mx,my);
-    }
-}
-function box(ctx,x,y,w,h,label,fill,stroke,sublabel=''){
-    rbox(ctx,x,y,w,h,fill,stroke);
-    lbl(ctx,label,x+w/2,y+(sublabel?h/2-8:h/2),13,INK,'center',true);
-    if(sublabel) {
-        ctx.fillStyle=DIM;
-        ctx.font='11px "IBM Plex Mono",monospace';
-        ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText(sublabel,x+w/2,y+h/2+9);
-    }
-}
-function dbCyl(ctx,x,y,w,h,label,fill,stroke){
-    ctx.fillStyle=fill;
-    ctx.beginPath(); ctx.ellipse(x+w/2,y+10,w/2,10,0,0,Math.PI*2); ctx.fill();
-    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();}
-    ctx.fillRect(x,y+10,w,h-20);
-    if(stroke){
-        ctx.beginPath(); ctx.moveTo(x,y+10); ctx.lineTo(x,y+h-10); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x+w,y+10); ctx.lineTo(x+w,y+h-10); ctx.stroke();
-    }
-    ctx.beginPath(); ctx.ellipse(x+w/2,y+h-10,w/2,10,0,0,Math.PI); ctx.fill();
-    if(stroke){ctx.stroke();}
-    lbl(ctx,label,x+w/2,y+h/2,13,INK,'center',true);
-}
+lb: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="lbRun()">Run</button>
+    <button class="btn" onclick="lbFail()">Fail Server 2</button>
+    <button class="btn" onclick="lbReset()">Reset</button>
+    <span class="status-line" id="lb-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 260" id="lb-svg">
+    <text x="40" y="30" fill="#8FA5C0" font-size="12">clients</text>
+    <circle cx="55" cy="60" r="10" fill="#5EEAD4"/>
+    <circle cx="55" cy="120" r="10" fill="#5EEAD4"/>
+    <circle cx="55" cy="180" r="10" fill="#5EEAD4"/>
 
+    <rect x="220" y="90" width="90" height="60" rx="8" fill="#0E2440" stroke="#FFB020" stroke-width="2"/>
+    <text x="235" y="125" fill="#FFB020" font-size="12">LB</text>
+
+    <g id="lb-servers">
+      <rect x="480" y="30" width="120" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="lb-s1"/>
+      <text x="495" y="62" fill="#E8EDF4" font-size="12">Server 1</text>
+      <rect x="480" y="102" width="120" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="lb-s2"/>
+      <text x="495" y="134" fill="#E8EDF4" font-size="12">Server 2</text>
+      <rect x="480" y="174" width="120" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="lb-s3"/>
+      <text x="495" y="206" fill="#E8EDF4" font-size="12">Server 3</text>
+    </g>
+
+    <line x1="65" y1="60" x2="220" y2="115" stroke="#1F3F66"/>
+    <line x1="65" y1="120" x2="220" y2="120" stroke="#1F3F66"/>
+    <line x1="65" y1="180" x2="220" y2="125" stroke="#1F3F66"/>
+    <line x1="310" y1="110" x2="480" y2="57" stroke="#1F3F66"/>
+    <line x1="310" y1="120" x2="480" y2="129" stroke="#1F3F66"/>
+    <line x1="310" y1="130" x2="480" y2="201" stroke="#1F3F66"/>
+
+    <g id="lb-packets"></g>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> request</span>
+    <span><span class="dot" style="background:#FFB020"></span> load balancer</span>
+    <span><span class="dot" style="background:#FF6B6B"></span> unhealthy node</span>
+  </div>
+</div>
+${grid2Cards(
+  ['Algorithms', ['Round robin — simplest, equal weight','Least connections — best for uneven request costs','Weighted round robin — heterogeneous hardware','Consistent hashing — sticky sessions, cache locality']],
+  ['Health checks', ['LB polls /health every few seconds','Failed node pulled from rotation instantly','Traffic reroutes to remaining healthy nodes','Node re-added once checks pass again']]
+)}
+${talkTrack([
+  'Clarify: L4 (TCP, fast) vs L7 (HTTP-aware, routes on path/header) — pick based on whether you need content-based routing.',
+  'Name the algorithm and why: round robin for uniform requests, least-connections when request cost varies widely.',
+  'Bring up health checks and how failure detection removes a node without dropping in-flight-safe traffic (graceful drain).',
+  'Mention LB itself is a single point of failure — pair with a floating IP / DNS failover or run active-active LBs.'
+])}`,
+
+cache: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="cacheRun('miss')">Run: Cache Miss</button>
+    <button class="btn" onclick="cacheRun('hit')">Run: Cache Hit</button>
+    <button class="btn" onclick="cacheReset()">Reset</button>
+    <span class="status-line" id="cache-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 200" id="cache-svg">
+    <circle cx="50" cy="100" r="12" fill="#5EEAD4"/>
+    <text x="30" y="130" fill="#8FA5C0" font-size="12">client</text>
+
+    <rect x="260" y="60" width="120" height="80" rx="8" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="cache-box"/>
+    <text x="285" y="105" fill="#E8EDF4" font-size="13">Cache</text>
+
+    <rect x="560" y="60" width="120" height="80" rx="8" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="db-box"/>
+    <text x="590" y="105" fill="#E8EDF4" font-size="13">DB</text>
+
+    <line x1="62" y1="100" x2="260" y2="100" stroke="#1F3F66"/>
+    <line x1="380" y1="100" x2="560" y2="100" stroke="#1F3F66" id="cache-to-db-line"/>
+
+    <g id="cache-packets"></g>
+    <text id="cache-label" x="380" y="180" fill="#8FA5C0" font-size="12" text-anchor="middle"></text>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> request path</span>
+    <span><span class="dot" style="background:#FFB020"></span> populate cache</span>
+  </div>
+</div>
+${grid2Cards(
+  ['Eviction & TTL', ['LRU — evict least-recently-used when full','TTL — expire stale data automatically','Write-through — write to cache + DB together','Write-behind — write to cache, flush to DB async']],
+  ['Failure modes', ['Thundering herd — many misses hit DB at once on expiry','Cache stampede fix: lock / request coalescing, jittered TTL','Stale reads — acceptable for most, not for balances','Cache-aside is most common: app owns the miss-fill logic']]
+)}
+${talkTrack([
+  'State the pattern by name: cache-aside (lazy load) is the default unless the interviewer asks for write-through.',
+  'Walk the miss path out loud: check cache → miss → read DB → populate cache → return. Then the hit path: single hop.',
+  'Raise invalidation explicitly — "the hard problem in caching is invalidation, not lookup" — TTL vs explicit invalidate on write.',
+  'If asked about consistency: cache-aside can serve stale data between a DB write and the next read; that’s often an acceptable trade for latency.'
+])}`,
+
+cdn: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="cdnRun('hit')">Run: Edge Hit</button>
+    <button class="btn" onclick="cdnRun('miss')">Run: Edge Miss</button>
+    <button class="btn" onclick="cdnReset()">Reset</button>
+    <span class="status-line" id="cdn-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 220" id="cdn-svg">
+    <circle cx="50" cy="110" r="12" fill="#5EEAD4"/>
+    <text x="15" y="140" fill="#8FA5C0" font-size="12">user</text>
+
+    <rect x="260" y="70" width="130" height="80" rx="8" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="280" y="105" fill="#E8EDF4" font-size="13">Edge node</text>
+    <text x="280" y="125" fill="#8FA5C0" font-size="11">(nearest PoP)</text>
+
+    <rect x="580" y="70" width="130" height="80" rx="8" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="605" y="105" fill="#E8EDF4" font-size="13">Origin</text>
+    <text x="600" y="125" fill="#8FA5C0" font-size="11">(your server)</text>
+
+    <line x1="62" y1="110" x2="260" y2="110" stroke="#1F3F66"/>
+    <line x1="390" y1="110" x2="580" y2="110" stroke="#1F3F66" stroke-dasharray="4 4"/>
+    <g id="cdn-packets"></g>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> user request</span>
+    <span><span class="dot" style="background:#FF6B6B"></span> origin round-trip (only on miss)</span>
+  </div>
+</div>
+${grid2Cards(
+  ['What belongs on a CDN', ['Static assets: JS, CSS, images, video','API responses that are cacheable & public','Not: per-user dynamic data, write requests','TTL headers (Cache-Control) drive edge freshness']],
+  ['Invalidation', ['Purge/invalidate API to force-evict an edge object','Versioned filenames (app.a1b2.js) avoid purge entirely','Stale-while-revalidate: serve stale, refresh in background','Geographic PoPs cut latency by serving near the user']]
+)}
+${talkTrack([
+  'Frame the win as latency + origin offload: most requests never leave the edge, so origin only handles cold content and writes.',
+  'Distinguish push CDN (you upload) vs pull CDN (origin-fetch-on-miss, more common) — mention pull is the default for most setups.',
+  'Bring up cache-busting via versioned filenames as the clean answer to "how do you invalidate" instead of relying only on purge APIs.',
+  'If the question is about dynamic content, note CDNs now cache personalized/API responses too, with short TTLs and stale-while-revalidate.'
+])}`,
+
+rate: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="rateRun()">Start bucket</button>
+    <button class="btn" onclick="rateBurst()">Burst 6 requests</button>
+    <button class="btn" onclick="rateReset()">Reset</button>
+    <span class="status-line" id="rate-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 220" id="rate-svg">
+    <text x="20" y="30" fill="#8FA5C0" font-size="12">Token bucket (capacity 5, refill 1/sec)</text>
+    <rect x="40" y="50" width="90" height="120" rx="10" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <g id="rate-tokens"></g>
+    <text x="40" y="188" fill="#8FA5C0" font-size="11">tokens: <tspan id="rate-count">0</tspan>/5</text>
+
+    <rect x="300" y="90" width="110" height="50" rx="8" fill="#0E2440" stroke="#FFB020" stroke-width="2"/>
+    <text x="320" y="120" fill="#FFB020" font-size="12">Limiter</text>
+
+    <rect x="560" y="90" width="120" height="50" rx="8" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="585" y="120" fill="#E8EDF4" font-size="12">Service</text>
+
+    <line x1="130" y1="115" x2="300" y2="115" stroke="#1F3F66"/>
+    <line x1="410" y1="115" x2="560" y2="115" stroke="#1F3F66"/>
+
+    <g id="rate-packets"></g>
+    <g id="rate-rejects"></g>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#FFB020"></span> token</span>
+    <span><span class="dot" style="background:#5EEAD4"></span> allowed request</span>
+    <span><span class="dot" style="background:#FF6B6B"></span> rejected (429)</span>
+  </div>
+</div>
+${grid2Cards(
+  ['Algorithms', ['Token bucket — allows bursts up to capacity','Leaky bucket — smooths to a constant outflow rate','Fixed window — simple, edge-of-window burst issue','Sliding window log/counter — accurate, more memory']],
+  ['Where it lives', ['At the API gateway, in front of all services','Per-client key: user ID, API key, or IP','Distributed limiter needs shared state — Redis + Lua script','Return 429 with Retry-After header on rejection']]
+)}
+${talkTrack([
+  'Pick token bucket as the default answer — it naturally allows short bursts while capping sustained rate, which matches real client behavior.',
+  'Address distribution: a single-process in-memory counter breaks once you have multiple gateway instances — need Redis (INCR + EXPIRE, or a Lua script for atomicity).',
+  'Mention granularity: per-user, per-IP, per-API-key, sometimes layered (global + per-user) to stop both abuse and noisy neighbors.',
+  'Close with graceful degradation: return 429 + Retry-After rather than silently dropping, so well-behaved clients back off correctly.'
+])}`,
+
+hash: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="hashPlaceKey()">Place a key</button>
+    <button class="btn" onclick="hashAddNode()">Add node</button>
+    <button class="btn" onclick="hashReset()">Reset</button>
+    <span class="status-line" id="hash-status">idle</span>
+  </div>
+  <svg viewBox="0 0 500 500" id="hash-svg">
+    <circle cx="250" cy="250" r="180" fill="none" stroke="#1F3F66" stroke-width="2"/>
+    <g id="hash-nodes"></g>
+    <g id="hash-keys"></g>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#FFB020"></span> node</span>
+    <span><span class="dot" style="background:#5EEAD4"></span> key</span>
+    <span>key maps to the next node clockwise on the ring</span>
+  </div>
+</div>
+${grid2Cards(
+  ['Why not plain hash % N', ['hash(key) % N remaps almost every key when N changes','That means a full cache/data reshuffle on scale up/down','Consistent hashing bounds remapping to ~1/N of keys','Ring + clockwise lookup makes node changes cheap']],
+  ['Real-world notes', ['Virtual nodes: each physical node gets many ring points','Virtual nodes smooth out uneven load distribution','Used in: DynamoDB, Cassandra, memcached client sharding, CDNs','Trade-off: slightly more complex than modulo sharding']]
+)}
+${talkTrack([
+  'Open with the problem it solves: naive hash % N causes a full reshuffle whenever a node joins or leaves — expensive at scale.',
+  'Describe the ring: both nodes and keys are hashed onto the same circular space; a key belongs to the first node clockwise from it.',
+  'Explain why this bounds the blast radius: adding/removing one node only affects the keys between it and its neighbor, roughly 1/N of the total.',
+  'Mention virtual nodes as the production refinement — without them, uneven node placement on the ring causes hot spots.'
+])}`,
+
+shard: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <label style="font-family:var(--mono); font-size:12px; color:var(--ink-dim);">Shard key:
+      <select id="shard-key-select" onchange="shardReset()" style="background:#0E2440;color:#E8EDF4;border:1px solid #1F3F66;border-radius:4px;padding:4px 6px;font-family:var(--mono);">
+        <option value="user">user_id</option>
+        <option value="range">signup_date (range)</option>
+      </select>
+    </label>
+    <button class="btn primary" onclick="shardRun()">Route 6 writes</button>
+    <button class="btn" onclick="shardReset()">Reset</button>
+    <span class="status-line" id="shard-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 240" id="shard-svg">
+    <rect x="20" y="90" width="110" height="60" rx="8" fill="#0E2440" stroke="#FFB020" stroke-width="2"/>
+    <text x="35" y="125" fill="#FFB020" font-size="12">Router</text>
+    <g id="shard-nodes">
+      <rect x="300" y="20" width="130" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+      <text x="325" y="52" fill="#E8EDF4" font-size="12">Shard A</text>
+      <rect x="300" y="93" width="130" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+      <text x="325" y="125" fill="#E8EDF4" font-size="12">Shard B</text>
+      <rect x="300" y="166" width="130" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+      <text x="325" y="198" fill="#E8EDF4" font-size="12">Shard C</text>
+    </g>
+    <line x1="130" y1="120" x2="300" y2="47" stroke="#1F3F66"/>
+    <line x1="130" y1="120" x2="300" y2="120" stroke="#1F3F66"/>
+    <line x1="130" y1="120" x2="300" y2="193" stroke="#1F3F66"/>
+    <g id="shard-packets"></g>
+    <g id="shard-labels"></g>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> write, routed by shard key</span>
+  </div>
+</div>
+${grid2Cards(
+  ['Shard key choice', ['Hash-based (user_id % N or consistent hash) — even spread','Range-based (date, alpha) — easy range scans, risk of hotspots','Bad key = hot shard: pick high-cardinality, evenly-accessed field','Composite keys when one column alone isn’t selective enough']],
+  ['Painful parts', ['Cross-shard joins / transactions are expensive or impossible','Resharding later is a major migration — plan headroom early','Celebrity/hotspot problem: one key gets disproportionate traffic','Often paired with a shard-lookup service or consistent hashing']]
+)}
+${talkTrack([
+  'Say the goal plainly: no single database can hold or serve the whole dataset, so split rows across nodes by a shard key.',
+  'Compare hash-based vs range-based sharding and pick one with a reason tied to the access pattern in the question (e.g. range for time-series scans, hash for uniform point lookups).',
+  'Flag the real cost up front: cross-shard joins and multi-row transactions get hard — call out how you would work around it (denormalization, saga pattern, application-side joins).',
+  'Mention resharding pain and how consistent hashing or a shard-mapping service reduces the blast radius of adding capacity later.'
+])}`,
+
+replica: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="replRun()">Write to leader</button>
+    <button class="btn" onclick="replFailover()">Kill leader</button>
+    <button class="btn" onclick="replReset()">Reset</button>
+    <span class="status-line" id="repl-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 240" id="repl-svg">
+    <circle cx="50" cy="120" r="12" fill="#5EEAD4"/>
+    <text x="20" y="150" fill="#8FA5C0" font-size="12">writer</text>
+    <rect x="230" y="90" width="130" height="60" rx="8" fill="#0E2440" stroke="#FFB020" stroke-width="2" id="repl-leader"/>
+    <text x="255" y="125" fill="#FFB020" font-size="12">Leader</text>
+
+    <rect x="540" y="20" width="130" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="repl-f1"/>
+    <text x="565" y="52" fill="#E8EDF4" font-size="12">Follower 1</text>
+    <rect x="540" y="160" width="130" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="repl-f2"/>
+    <text x="565" y="192" fill="#E8EDF4" font-size="12">Follower 2</text>
+
+    <line x1="62" y1="120" x2="230" y2="120" stroke="#1F3F66"/>
+    <line x1="360" y1="110" x2="540" y2="47" stroke="#1F3F66" stroke-dasharray="4 4"/>
+    <line x1="360" y1="130" x2="540" y2="187" stroke="#1F3F66" stroke-dasharray="4 4"/>
+    <g id="repl-packets"></g>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> write (sync/queued at client)</span>
+    <span><span class="dot" style="background:#FFB020"></span> async replication stream</span>
+    <span><span class="dot" style="background:#FF6B6B"></span> leader down → promote follower</span>
+  </div>
+</div>
+${grid2Cards(
+  ['Sync vs async', ['Sync replication: leader waits for follower ack — safe, slower','Async: leader acks immediately, replicates in background — fast, risk of data loss on crash','Semi-sync: wait for at least one follower — common middle ground','Reads can be spread to followers to scale read throughput']],
+  ['Failover', ['Followers track replication lag behind the leader','On leader failure, the most up-to-date follower is promoted','Split-brain risk if old leader comes back — needs fencing/quorum','Consensus protocols (Raft) automate safe leader election']]
+)}
+${talkTrack([
+  'Distinguish leader-follower (single writer, common default) from multi-leader / leaderless — pick leader-follower unless the question needs multi-region writes.',
+  'Name the sync/async trade-off directly: async gives lower write latency but a leader crash can lose the last unreplicated writes.',
+  'Explain how reads scale: route reads to followers, but call out replication lag can serve stale reads — mention read-your-writes as a fix if relevant.',
+  'For failover, mention a consensus mechanism (e.g. Raft) or an external coordinator so promotion doesn’t create two leaders (split-brain).'
+])}`,
+
+cap: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn" onclick="capPartition()">Trigger network partition</button>
+    <button class="btn primary" onclick="capChoose('CP')">Choose CP</button>
+    <button class="btn primary" onclick="capChoose('AP')">Choose AP</button>
+    <button class="btn" onclick="capReset()">Reset</button>
+    <span class="status-line" id="cap-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 220" id="cap-svg">
+    <rect x="40" y="70" width="150" height="70" rx="8" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="70" y="110" fill="#E8EDF4" font-size="13">Node A (region 1)</text>
+    <rect x="560" y="70" width="150" height="70" rx="8" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="590" y="110" fill="#E8EDF4" font-size="13">Node B (region 2)</text>
+    <line x1="190" y1="105" x2="560" y2="105" stroke="#1F3F66" stroke-width="3" id="cap-link"/>
+    <g id="cap-break"></g>
+    <text id="cap-verdict" x="380" y="180" text-anchor="middle" fill="#8FA5C0" font-size="13"></text>
+  </svg>
+</div>
+${grid2Cards(
+  ['The theorem', ['Consistency — every read sees the latest write','Availability — every request gets a (non-error) response','Partition tolerance — system keeps working despite network split','In practice: partitions happen, so it’s really C vs A during one']],
+  ['Picking in practice', ['CP: payments, inventory counts, anything money-adjacent','AP: social feeds, product catalogs, presence/status','Most real systems are tunable per-operation, not globally one or the other','PACELC extends this: even without a partition, trade latency vs consistency']]
+)}
+${talkTrack([
+  'Correct the common misphrasing up front: you don’t "pick 2 of 3" — partition tolerance isn’t optional in a distributed system, so the real choice is C vs A *during* a partition.',
+  'Ground it with an example from the prompt: for a payments ledger, favor CP (reject/queue writes rather than risk double-spend); for a social feed, favor AP (show slightly stale data over an error).',
+  'Bring up PACELC as the more complete framing if the interviewer pushes further — it captures the latency/consistency trade-off even when there’s no partition.',
+  'Note that real systems are rarely globally one or the other — different operations in the same system can make different choices.'
+])}`,
+
+queue: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="queueProduce()">Produce message</button>
+    <button class="btn" onclick="queueBurst()">Burst of traffic</button>
+    <button class="btn" onclick="queueReset()">Reset</button>
+    <span class="status-line" id="queue-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 220" id="queue-svg">
+    <rect x="20" y="80" width="110" height="60" rx="8" fill="#0E2440" stroke="#5EEAD4" stroke-width="2"/>
+    <text x="35" y="115" fill="#5EEAD4" font-size="12">Producer</text>
+
+    <rect x="280" y="60" width="220" height="100" rx="8" fill="#0E2440" stroke="#FFB020" stroke-width="2"/>
+    <text x="330" y="52" fill="#FFB020" font-size="12">Queue</text>
+    <g id="queue-messages"></g>
+
+    <rect x="620" y="20" width="120" height="45" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="640" y="47" fill="#E8EDF4" font-size="11">Consumer 1</text>
+    <rect x="620" y="88" width="120" height="45" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="640" y="115" fill="#E8EDF4" font-size="11">Consumer 2</text>
+    <rect x="620" y="156" width="120" height="45" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="640" y="183" fill="#E8EDF4" font-size="11">Consumer 3</text>
+
+    <line x1="130" y1="110" x2="280" y2="110" stroke="#1F3F66"/>
+    <line x1="500" y1="90" x2="620" y2="42" stroke="#1F3F66"/>
+    <line x1="500" y1="110" x2="620" y2="110" stroke="#1F3F66"/>
+    <line x1="500" y1="130" x2="620" y2="178" stroke="#1F3F66"/>
+    <g id="queue-packets"></g>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> produced message</span>
+    <span><span class="dot" style="background:#FFB020"></span> queued (buffered)</span>
+  </div>
+</div>
+${grid2Cards(
+  ['Why decouple', ['Producer doesn’t block waiting on a slow consumer','Queue absorbs traffic spikes — consumers drain at steady pace','Independent scaling: add consumers without touching producer','Retry & dead-letter queues handle poison messages']],
+  ['Delivery guarantees', ['At-most-once — fast, can lose messages','At-least-once — common default, consumer must be idempotent','Exactly-once — expensive, usually simulated via idempotency keys','Ordering: single partition/queue per key if order matters']]
+)}
+${talkTrack([
+  'Lead with the core benefit: decoupling in time — producer and consumer don’t need to be up, fast, or scaled the same at the same moment.',
+  'Use "burst" to explain load leveling: the queue absorbs a traffic spike so downstream services see a smooth, sustainable rate instead of a thundering herd.',
+  'Address delivery semantics directly — most systems give at-least-once, so consumers must be idempotent (dedupe by message ID).',
+  'If ordering matters, mention partitioning by key (like Kafka partitions) so related messages stay ordered while unrelated ones parallelize.'
+])}`,
+
+saga: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="sagaRun('success')">Run: happy path</button>
+    <button class="btn" onclick="sagaRun('fail')">Run: payment fails at step 3</button>
+    <button class="btn" onclick="sagaReset()">Reset</button>
+    <span class="status-line" id="saga-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 260" id="saga-svg">
+    <g id="saga-steps">
+      <rect x="20" y="40" width="150" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="saga-s1"/>
+      <text x="40" y="72" fill="#E8EDF4" font-size="12">1. Reserve order</text>
+      <rect x="205" y="40" width="150" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="saga-s2"/>
+      <text x="225" y="72" fill="#E8EDF4" font-size="12">2. Reserve stock</text>
+      <rect x="390" y="40" width="150" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="saga-s3"/>
+      <text x="410" y="72" fill="#E8EDF4" font-size="12">3. Charge payment</text>
+      <rect x="575" y="40" width="160" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="saga-s4"/>
+      <text x="595" y="72" fill="#E8EDF4" font-size="12">4. Confirm order</text>
+    </g>
+    <line x1="170" y1="67" x2="205" y2="67" stroke="#1F3F66" marker-end="url(#arrow)"/>
+    <line x1="355" y1="67" x2="390" y2="67" stroke="#1F3F66" marker-end="url(#arrow)"/>
+    <line x1="540" y1="67" x2="575" y2="67" stroke="#1F3F66" marker-end="url(#arrow)"/>
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#1F3F66"/>
+      </marker>
+    </defs>
+
+    <g id="saga-compensate" style="display:none">
+      <text x="20" y="140" fill="#FF6B6B" font-size="12">Compensating transactions run in reverse:</text>
+      <rect x="20" y="160" width="150" height="45" rx="6" fill="#0E2440" stroke="#FF6B6B" stroke-width="2"/>
+      <text x="35" y="188" fill="#FF6B6B" font-size="11">Cancel order</text>
+      <rect x="205" y="160" width="150" height="45" rx="6" fill="#0E2440" stroke="#FF6B6B" stroke-width="2"/>
+      <text x="220" y="188" fill="#FF6B6B" font-size="11">Release stock</text>
+      <line x1="200" y1="182" x2="170" y2="182" stroke="#FF6B6B" marker-end="url(#arrowred)"/>
+      <line x1="385" y1="182" x2="355" y2="182" stroke="#FF6B6B" marker-end="url(#arrowred)"/>
+      <defs>
+        <marker id="arrowred" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#FF6B6B"/>
+        </marker>
+      </defs>
+    </g>
+    <g id="saga-packet"></g>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> step in progress</span>
+    <span><span class="dot" style="background:#FFB020"></span> step committed</span>
+    <span><span class="dot" style="background:#FF6B6B"></span> failure → compensate backwards</span>
+  </div>
+</div>
+${grid2Cards(
+  ['Orchestration vs choreography', ['Orchestrated: a saga coordinator calls each step, tracks state','Choreographed: each service reacts to the previous one’s event','Orchestration is easier to reason about, adds a coordinator dependency','Choreography scales decoupling further, harder to trace end-to-end']],
+  ['Why not 2PC / a distributed transaction', ['Two-phase commit locks resources across services — kills throughput','Doesn’t play well with different DBs/tech per microservice','Saga trades strict atomicity for eventual consistency + compensation','Each step must be idempotent — retries are inevitable in distributed systems']]
+)}
+${talkTrack([
+  'Frame the problem first: a payment flow touches order, inventory, and payment services, each with its own database — you can’t use one ACID transaction across all three.',
+  'Introduce the saga as a sequence of local transactions, each with a paired compensating action, so a failure at step 3 triggers steps 2 and 1 to undo in reverse.',
+  'Pick orchestration for a clear answer: a saga coordinator explicitly owns state and next-step decisions, which is easier to explain and debug than choreography under interview time pressure.',
+  'Tie it back to the ledger: pair the saga with a double-entry ledger so every state transition — reserve, charge, compensate — is an auditable, immutable entry rather than a mutable balance update.'
+])}`,
+
+idem: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="idemRun('first')">Send request (key: abc123)</button>
+    <button class="btn" onclick="idemRun('retry')">Retry same request (timeout)</button>
+    <button class="btn" onclick="idemReset()">Reset</button>
+    <span class="status-line" id="idem-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 220" id="idem-svg">
+    <circle cx="50" cy="110" r="12" fill="#5EEAD4"/>
+    <text x="15" y="140" fill="#8FA5C0" font-size="12">client</text>
+
+    <rect x="230" y="80" width="140" height="60" rx="8" fill="#0E2440" stroke="#FFB020" stroke-width="2"/>
+    <text x="250" y="115" fill="#FFB020" font-size="12">API server</text>
+
+    <rect x="480" y="20" width="150" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="500" y="52" fill="#E8EDF4" font-size="12">Idempotency store</text>
+    <text x="500" y="66" fill="#8FA5C0" font-size="10">key → result (Redis)</text>
+
+    <rect x="480" y="150" width="150" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="500" y="182" fill="#E8EDF4" font-size="12">Payment DB</text>
+
+    <line x1="62" y1="110" x2="230" y2="110" stroke="#1F3F66"/>
+    <line x1="370" y1="100" x2="480" y2="47" stroke="#1F3F66"/>
+    <line x1="370" y1="120" x2="480" y2="177" stroke="#1F3F66"/>
+    <g id="idem-packets"></g>
+    <text id="idem-label" x="380" y="200" text-anchor="middle" fill="#8FA5C0" font-size="12"></text>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> new key — process for real</span>
+    <span><span class="dot" style="background:#FFB020"></span> known key — return cached result</span>
+  </div>
+</div>
+${grid2Cards(
+  ['How it works', ['Client generates a unique key per logical operation (e.g. UUID)','Same key sent again on retry — client controls this, not the server','Server checks the store: seen key → return the stored response as-is','Unseen key → process normally, store the result keyed by it']],
+  ['Where it matters most', ['Payment charges — a network timeout must never mean "charge twice"','Order creation, email sends — anything non-idempotent by nature','Key TTL: store for as long as a client might plausibly retry (e.g. 24h)','Store the response body, not just a flag — retries need the same answer back']]
+)}
+${talkTrack([
+  'Open with the failure mode this fixes: a client calls "charge card," the request succeeds server-side, but the response is lost to a timeout — the client, not knowing, retries.',
+  'Explain the mechanism: the client attaches an Idempotency-Key header; the server keys a small store (Redis is typical) by that key and stores the eventual response.',
+  'Walk through both paths — new key: process the payment, write the result under that key. Same key again: skip processing entirely, replay the stored response.',
+  'Mention it needs to be atomic: check-and-reserve the key (e.g. SETNX) before doing the work, or two concurrent retries can both slip through and double-process.'
+])}`,
+
+urlshort: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="urlRun('write')">Run: shorten a URL</button>
+    <button class="btn" onclick="urlRun('read')">Run: resolve a short link</button>
+    <button class="btn" onclick="urlReset()">Reset</button>
+    <span class="status-line" id="url-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 220" id="url-svg">
+    <circle cx="45" cy="110" r="12" fill="#5EEAD4"/>
+    <text x="10" y="140" fill="#8FA5C0" font-size="12">client</text>
+
+    <rect x="200" y="80" width="130" height="60" rx="8" fill="#0E2440" stroke="#FFB020" stroke-width="2"/>
+    <text x="220" y="115" fill="#FFB020" font-size="12">API layer</text>
+
+    <rect x="430" y="20" width="140" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="450" y="52" fill="#E8EDF4" font-size="12">Cache (hot links)</text>
+
+    <rect x="430" y="150" width="140" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="450" y="182" fill="#E8EDF4" font-size="12">Sharded DB</text>
+
+    <rect x="640" y="85" width="100" height="50" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="650" y="115" fill="#E8EDF4" font-size="11">ID generator</text>
+
+    <line x1="57" y1="110" x2="200" y2="110" stroke="#1F3F66"/>
+    <line x1="330" y1="100" x2="430" y2="47" stroke="#1F3F66"/>
+    <line x1="330" y1="120" x2="430" y2="177" stroke="#1F3F66"/>
+    <line x1="330" y1="105" x2="640" y2="108" stroke="#1F3F66" stroke-dasharray="3 3"/>
+    <g id="url-packets"></g>
+    <text id="url-label" x="380" y="205" text-anchor="middle" fill="#8FA5C0" font-size="12"></text>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> write: shorten</span>
+    <span><span class="dot" style="background:#FFB020"></span> read: resolve + redirect</span>
+  </div>
+</div>
+<div class="grid2">
+  <div class="card"><h3>Requirements</h3><ul>
+    <li>Functional: shorten a long URL, redirect short → long, optional custom alias & expiry</li>
+    <li>Non-functional: read-heavy (~100:1 read/write), low-latency redirect, high availability</li>
+    <li>Scale: 100M new URLs/month, 10B redirects/month — back-of-envelope target</li>
+  </ul></div>
+  <div class="card"><h3>Capacity estimate</h3><ul>
+    <li>Writes: 100M/mo ≈ 40/sec average, plan for 5–10× peak</li>
+    <li>Reads: 10B/mo ≈ 4,000/sec average — this is the number that drives the design</li>
+    <li>Storage: 100M/mo × 5 yrs × ~500 bytes/row ≈ ~3TB — fits sharded relational or KV store</li>
+  </ul></div>
+  <div class="card"><h3>API</h3><ul>
+    <li><code>POST /shorten {longUrl, customAlias?, expiresAt?}</code> → <code>{shortUrl}</code></li>
+    <li><code>GET /{code}</code> → 301/302 redirect to the long URL</li>
+    <li>301 (cacheable, browser remembers) vs 302 (lets you keep tracking clicks) — a real trade-off to name out loud</li>
+  </ul></div>
+  <div class="card"><h3>ID generation</h3><ul>
+    <li>Base62 encode an auto-incrementing counter — simple, needs a coordinated counter service</li>
+    <li>Or hash(longUrl) truncated — collision risk, needs a check-and-retry</li>
+    <li>Pre-generated key pool (like Krishnamurthy/Tinyurl designs) avoids hot-spotting a single counter</li>
+  </ul></div>
+</div>
+${talkTrack([
+  'Start by stating requirements and the read/write ratio out loud — this system is read-heavy by ~100:1, and that ratio should drive every downstream choice (cache in front, optimize reads over writes).',
+  'Do the capacity math on the whiteboard, even roughly — it justifies a cache (redirect path is the entire product, so it must be fast) and tells you storage fits a straightforward sharded store, no need to over-engineer.',
+  'Cover ID generation as its own decision: counter + base62 is the clean, collision-free answer; mention the coordination cost and how a pre-allocated key-range per app server avoids a single counter becoming a bottleneck.',
+  'Close by composing the earlier patterns instead of inventing new ones: cache-aside in front of the DB for hot redirects, sharding by short-code hash for storage, and a CDN/edge layer if redirects need to be global — showing you can assemble primitives, not just recite them.'
+])}`,
+
+ratelimiter: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="rlmRun()">Run: two gateway instances, shared limit</button>
+    <button class="btn" onclick="rlmReset()">Reset</button>
+    <span class="status-line" id="rlm-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 220" id="rlm-svg">
+    <rect x="20" y="30" width="130" height="50" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="40" y="60" fill="#E8EDF4" font-size="12">Gateway 1</text>
+    <rect x="20" y="140" width="130" height="50" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="40" y="170" fill="#E8EDF4" font-size="12">Gateway 2</text>
+
+    <rect x="310" y="85" width="150" height="55" rx="8" fill="#0E2440" stroke="#FFB020" stroke-width="2"/>
+    <text x="330" y="118" fill="#FFB020" font-size="12">Redis (shared)</text>
+    <text x="330" y="132" fill="#8FA5C0" font-size="10">key: user:42 count</text>
+
+    <rect x="600" y="85" width="130" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="620" y="118" fill="#E8EDF4" font-size="12">Downstream</text>
+
+    <line x1="150" y1="55" x2="310" y2="100" stroke="#1F3F66"/>
+    <line x1="150" y1="165" x2="310" y2="125" stroke="#1F3F66"/>
+    <line x1="460" y1="112" x2="600" y2="112" stroke="#1F3F66"/>
+    <g id="rlm-packets"></g>
+    <text id="rlm-label" x="380" y="195" text-anchor="middle" fill="#8FA5C0" font-size="12"></text>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> allowed</span>
+    <span><span class="dot" style="background:#FF6B6B"></span> rejected — limit shared across instances</span>
+  </div>
+</div>
+<div class="grid2">
+  <div class="card"><h3>Requirements</h3><ul>
+    <li>Limit per user/API-key (e.g. 100 req/min), enforced across all gateway instances</li>
+    <li>Low added latency — the limiter sits on every request\'s hot path</li>
+    <li>Fail open or closed if Redis is briefly unreachable? — state your default and why</li>
+  </ul></div>
+  <div class="card"><h3>Design decisions</h3><ul>
+    <li>State must be centralized (Redis) — in-memory per-instance counters don\'t agree with each other</li>
+    <li>Atomic INCR + EXPIRE, or a Lua script for token-bucket logic in one round trip</li>
+    <li>Sliding-window counter over fixed-window to avoid edge-of-window burst abuse</li>
+    <li>Fail-open under Redis outage is the common choice — availability over strict enforcement</li>
+  </ul></div>
+</div>
+${talkTrack([
+  'Name the trap first: two gateway instances each keeping their own in-memory counter will let a client do 2× the intended limit — so state has to be centralized.',
+  'Propose Redis as the shared store, with an atomic operation (INCR+EXPIRE or a Lua script) so two concurrent requests can\'t both read "4 of 5 used" and both proceed.',
+  'Pick sliding-window counter over fixed-window — fixed-window lets a client burst 2× the limit right at the window boundary, which a senior interviewer will probe for.',
+  'Address the failure mode explicitly: if Redis is unreachable, decide and state fail-open (allow traffic, protect availability) vs fail-closed (reject, protect downstream) — either is defensible if you justify it.'
+])}`,
+
+newsfeed: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="feedRun('normal')">Run: normal user posts</button>
+    <button class="btn" onclick="feedRun('celebrity')">Run: celebrity posts (10M followers)</button>
+    <button class="btn" onclick="feedReset()">Reset</button>
+    <span class="status-line" id="feed-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 220" id="feed-svg">
+    <circle cx="50" cy="110" r="12" fill="#5EEAD4"/>
+    <text x="15" y="140" fill="#8FA5C0" font-size="12">author</text>
+
+    <rect x="220" y="80" width="140" height="60" rx="8" fill="#0E2440" stroke="#FFB020" stroke-width="2"/>
+    <text x="240" y="115" fill="#FFB020" font-size="12">Post service</text>
+
+    <g id="feed-followers">
+      <rect x="500" y="15" width="120" height="40" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+      <text x="515" y="40" fill="#E8EDF4" font-size="11">Follower A feed</text>
+      <rect x="500" y="90" width="120" height="40" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+      <text x="515" y="115" fill="#E8EDF4" font-size="11">Follower B feed</text>
+      <rect x="500" y="165" width="120" height="40" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+      <text x="515" y="190" fill="#E8EDF4" font-size="11">Follower C feed</text>
+    </g>
+    <line x1="62" y1="110" x2="220" y2="110" stroke="#1F3F66"/>
+    <line x1="360" y1="95" x2="500" y2="35" stroke="#1F3F66"/>
+    <line x1="360" y1="110" x2="500" y2="110" stroke="#1F3F66"/>
+    <line x1="360" y1="125" x2="500" y2="185" stroke="#1F3F66"/>
+    <g id="feed-packets"></g>
+    <text id="feed-label" x="380" y="205" text-anchor="middle" fill="#8FA5C0" font-size="12"></text>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> fan-out on write — push to every follower\'s feed</span>
+    <span><span class="dot" style="background:#FFB020"></span> fan-out on read — celebrity post pulled at read time</span>
+  </div>
+</div>
+<div class="grid2">
+  <div class="card"><h3>Fan-out on write</h3><ul>
+    <li>On post, push the post ID into every follower\'s precomputed feed list</li>
+    <li>Reads are cheap: just read your feed list, already assembled</li>
+    <li>Breaks down for celebrities — 10M followers means 10M writes per post</li>
+  </ul></div>
+  <div class="card"><h3>Fan-out on read</h3><ul>
+    <li>Feed assembled at read time by merging posts from everyone you follow</li>
+    <li>No write blow-up, but every read does more work</li>
+    <li>Hybrid: fan-out on write for normal users, fan-out on read for celebrities</li>
+  </ul></div>
+</div>
+${talkTrack([
+  'Open with the trade-off by name: fan-out on write makes reads cheap and writes expensive; fan-out on read is the reverse — and a senior answer picks based on the follower-count distribution, not a blanket choice.',
+  'Walk the normal-user path: on post, push into every follower\'s precomputed feed (stored in something like Redis lists) — the follower\'s read is then just one lookup.',
+  'Call out the celebrity problem explicitly, since it\'s the detail that separates a junior from a senior answer: a 10M-follower post cannot fan out synchronously without melting the write path.',
+  'Land on the hybrid: fan-out on write for the common case, fan-out on read (merge celebrity posts in at read time) for high-follower accounts — this is what real systems (Twitter, Instagram) actually do.'
+])}`,
+
+chat: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="chatRun('online')">Run: both users online</button>
+    <button class="btn" onclick="chatRun('offline')">Run: recipient offline</button>
+    <button class="btn" onclick="chatReset()">Reset</button>
+    <span class="status-line" id="chat-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 220" id="chat-svg">
+    <circle cx="45" cy="110" r="12" fill="#5EEAD4"/>
+    <text x="10" y="140" fill="#8FA5C0" font-size="12">sender</text>
+
+    <rect x="190" y="80" width="140" height="60" rx="8" fill="#0E2440" stroke="#FFB020" stroke-width="2"/>
+    <text x="205" y="105" fill="#FFB020" font-size="12">Chat gateway</text>
+    <text x="205" y="122" fill="#8FA5C0" font-size="10">(WebSocket)</text>
+
+    <rect x="420" y="20" width="140" height="45" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="440" y="47" fill="#E8EDF4" font-size="11">Presence service</text>
+
+    <rect x="420" y="150" width="140" height="50" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="435" y="180" fill="#E8EDF4" font-size="11">Message store</text>
+
+    <circle cx="690" cy="110" r="12" fill="#5EEAD4" id="chat-recipient-dot"/>
+    <text x="655" y="140" fill="#8FA5C0" font-size="12">recipient</text>
+
+    <line x1="57" y1="110" x2="190" y2="110" stroke="#1F3F66"/>
+    <line x1="330" y1="95" x2="420" y2="42" stroke="#1F3F66"/>
+    <line x1="330" y1="120" x2="420" y2="170" stroke="#1F3F66"/>
+    <line x1="330" y1="108" x2="690" y2="108" stroke="#1F3F66" stroke-dasharray="4 4"/>
+    <g id="chat-packets"></g>
+    <text id="chat-label" x="380" y="205" text-anchor="middle" fill="#8FA5C0" font-size="12"></text>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> message delivered live</span>
+    <span><span class="dot" style="background:#FFB020"></span> stored, pushed when recipient reconnects</span>
+  </div>
+</div>
+<div class="grid2">
+  <div class="card"><h3>Connection model</h3><ul>
+    <li>Persistent WebSocket per online client, held by a chat gateway server</li>
+    <li>Presence service tracks which gateway node holds which user\'s connection</li>
+    <li>Gateway is stateful — needs sticky routing or a lookup, unlike a stateless HTTP API</li>
+  </ul></div>
+  <div class="card"><h3>Delivery & storage</h3><ul>
+    <li>Every message persisted first (durability), then pushed if recipient is online</li>
+    <li>Offline recipient: message queued, delivered + read receipts sent on reconnect</li>
+    <li>Message ordering per conversation — partition by conversation ID, not user ID</li>
+  </ul></div>
+</div>
+${talkTrack([
+  'Frame the core difference from a typical CRUD API upfront: chat needs a persistent connection (WebSocket), which makes the gateway stateful — that changes how you load-balance and scale it.',
+  'Explain presence: a lookup service maps user ID → which gateway instance holds their live connection, so a message from sender to recipient can be routed to the right node.',
+  'Cover the offline case as the one interviewers probe hardest: message is durably written first, then delivery is attempted; if the recipient is offline it sits in their queue and pushes on reconnect.',
+  'Mention ordering and delivery guarantees: partition storage by conversation ID to keep messages in order, and use at-least-once delivery with a client-side dedupe by message ID.'
+])}`,
+
+kvstore: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="kvRun('write')">Run: write with N=3 replicas</button>
+    <button class="btn" onclick="kvRun('read')">Run: quorum read</button>
+    <button class="btn" onclick="kvReset()">Reset</button>
+    <span class="status-line" id="kv-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 220" id="kv-svg">
+    <circle cx="45" cy="110" r="12" fill="#5EEAD4"/>
+    <text x="10" y="140" fill="#8FA5C0" font-size="12">client</text>
+
+    <rect x="190" y="80" width="130" height="60" rx="8" fill="#0E2440" stroke="#FFB020" stroke-width="2"/>
+    <text x="205" y="115" fill="#FFB020" font-size="12">Coordinator</text>
+
+    <rect x="480" y="15" width="130" height="45" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="kv-n1"/>
+    <text x="505" y="42" fill="#E8EDF4" font-size="11">Node 1</text>
+    <rect x="480" y="88" width="130" height="45" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="kv-n2"/>
+    <text x="505" y="115" fill="#E8EDF4" font-size="11">Node 2</text>
+    <rect x="480" y="160" width="130" height="45" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2" id="kv-n3"/>
+    <text x="505" y="187" fill="#E8EDF4" font-size="11">Node 3</text>
+
+    <line x1="57" y1="110" x2="190" y2="110" stroke="#1F3F66"/>
+    <line x1="320" y1="95" x2="480" y2="38" stroke="#1F3F66"/>
+    <line x1="320" y1="110" x2="480" y2="110" stroke="#1F3F66"/>
+    <line x1="320" y1="125" x2="480" y2="183" stroke="#1F3F66"/>
+    <g id="kv-packets"></g>
+    <text id="kv-label" x="380" y="205" text-anchor="middle" fill="#8FA5C0" font-size="12"></text>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> request to replica</span>
+    <span><span class="dot" style="background:#FFB020"></span> acknowledged</span>
+  </div>
+</div>
+<div class="grid2">
+  <div class="card"><h3>Partitioning & replication</h3><ul>
+    <li>Consistent hashing places each key on N=3 nodes around the ring</li>
+    <li>Coordinator (any node, or a gateway) fans a request out to the key\'s replica set</li>
+    <li>Node join/leave only reshuffles a fraction of keys, not the whole dataset</li>
+  </ul></div>
+  <div class="card"><h3>Tunable consistency</h3><ul>
+    <li>W + R > N gives you strong consistency (e.g. W=2, R=2, N=3)</li>
+    <li>Lower W or R for lower latency, at the cost of possibly stale reads</li>
+    <li>Conflict resolution when replicas disagree: last-write-wins, or vector clocks + app-level merge</li>
+  </ul></div>
+</div>
+${talkTrack([
+  'State the two problems this design solves together: partitioning (dataset too big for one node) and replication (one node isn\'t durable or available enough) — consistent hashing handles both by placing each key on N consecutive nodes on the ring.',
+  'Introduce the quorum idea by name: with N=3 replicas, a write needs W acknowledgments and a read needs R responses; picking W+R>N guarantees a read sees the latest write.',
+  'Give the senior-level nuance: this is Dynamo\'s "tunable consistency" — you can dial W/R per operation to trade latency for consistency, rather than being stuck with one global choice.',
+  'Close with conflict resolution: when replicas disagree after a partition heals, last-write-wins is simple but can silently drop data; vector clocks preserve the conflict for the application to resolve, which is the more defensible senior answer.'
+])}`,
+
+ledger: () => `
+<div class="stage">
+  <div class="stage-controls">
+    <button class="btn primary" onclick="ledgerRun('success')">Run: transfer ₹500, A → B</button>
+    <button class="btn" onclick="ledgerRun('retry')">Run: client retries after timeout</button>
+    <button class="btn" onclick="ledgerReset()">Reset</button>
+    <span class="status-line" id="ledger-status">idle</span>
+  </div>
+  <svg viewBox="0 0 760 220" id="ledger-svg">
+    <circle cx="45" cy="110" r="12" fill="#5EEAD4"/>
+    <text x="10" y="140" fill="#8FA5C0" font-size="12">client</text>
+
+    <rect x="190" y="80" width="140" height="60" rx="8" fill="#0E2440" stroke="#FFB020" stroke-width="2"/>
+    <text x="205" y="105" fill="#FFB020" font-size="12">Ledger service</text>
+    <text x="205" y="122" fill="#8FA5C0" font-size="10">(idempotency check)</text>
+
+    <rect x="470" y="15" width="240" height="55" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="490" y="38" fill="#E8EDF4" font-size="11">Ledger entries (append-only)</text>
+    <text x="490" y="55" fill="#8FA5C0" font-size="10">debit A ₹500 · credit B ₹500</text>
+
+    <rect x="470" y="150" width="240" height="50" rx="6" fill="#0E2440" stroke="#1F3F66" stroke-width="2"/>
+    <text x="490" y="180" fill="#E8EDF4" font-size="11">Account balance (derived / cached)</text>
+
+    <line x1="57" y1="110" x2="190" y2="110" stroke="#1F3F66"/>
+    <line x1="330" y1="95" x2="470" y2="45" stroke="#1F3F66"/>
+    <line x1="330" y1="120" x2="470" y2="175" stroke="#1F3F66"/>
+    <g id="ledger-packets"></g>
+    <text id="ledger-label" x="380" y="205" text-anchor="middle" fill="#8FA5C0" font-size="12"></text>
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:#5EEAD4"></span> new transfer — write two balanced entries</span>
+    <span><span class="dot" style="background:#FFB020"></span> retried transfer — idempotency key blocks a duplicate</span>
+  </div>
+</div>
+<div class="grid2">
+  <div class="card"><h3>Double-entry ledger</h3><ul>
+    <li>Every transfer writes two entries: a debit and a credit, same amount, sum to zero</li>
+    <li>Entries are append-only and immutable — corrections are new offsetting entries, never edits</li>
+    <li>Account balance is a derived value (sum of entries), optionally cached for fast reads</li>
+  </ul></div>
+  <div class="card"><h3>Correctness under failure</h3><ul>
+    <li>Idempotency key on every transfer request — a client retry after a timeout can\'t double-debit</li>
+    <li>Both entries commit in one local transaction (same DB) — no partial two-entry writes</li>
+    <li>Cross-service flows (reserve → charge → confirm) wrapped in a saga with compensating entries</li>
+  </ul></div>
+</div>
+${talkTrack([
+  'Open with why balances alone aren\'t enough: a single mutable "balance" column gives you no audit trail and is prone to lost updates under concurrency — a ledger of immutable entries fixes both.',
+  'Describe double-entry mechanics concretely: every transfer is exactly two entries, a debit and a credit of equal magnitude, so the ledger is self-balancing and auditable by construction.',
+  'Layer in idempotency: the transfer request carries a client-generated key, checked before any entries are written, so a network timeout and retry can never produce two debits for one intended transfer.',
+  'For a multi-service payment flow (order, inventory, payment), tie it to the saga pattern: each step writes its own ledger entries, and a failure triggers compensating entries rather than deleting or editing history — this is the answer a fintech interviewer is listening for.'
+])}`,
+};
+
+function grid2Cards(c1, c2){
+  return `<div class="grid2">
+    <div class="card"><h3>${c1[0]}</h3><ul>${c1[1].map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="card"><h3>${c2[0]}</h3><ul>${c2[1].map(x=>`<li>${x}</li>`).join('')}</ul></div>
+  </div>`;
+}
+function talkTrack(points){
+  return `<div class="talk-track"><h3>Talk track</h3><ol>${points.map(p=>`<li>${p}</li>`).join('')}</ol></div>`;
+}
+</script>
+<script>
 const TOPICS = [
-    {
-        id: 'url', name: 'URL Shortener', cat: 'Classic',
-        concepts: ['Base62 Encoding (A-Z, a-z, 0-9)', 'Hash collision handling', 'Custom aliases support', '301 (Permanent) vs 302 (Temporary) redirects', 'Analytics tracking & Rate Limiting'],
-        questions: ['How to handle 100M URLs/day?', 'How to ensure uniqueness across distributed servers?', 'How to support custom aliases?'],
-        numbers: [{v:'100M',l:'URLs/day'}, {v:'10:1',l:'Read:Write'}, {v:'100GB',l:'Storage/yr'}],
-        tradeoffs: { gain: 'Scalable reads and fast redirects with Redis.', cost: 'Storage growth over time; DB bottleneck on massive hash collisions.' },
-        build: () => {
-            return [
-                { step:1, msg:"1. Client submits a long URL to shorten.", show:['client','api','arr1'] },
-                { step:2, msg:"2. API Server asks ID Generator for a unique sequence.", show:['client','api','arr1','idgen','arr2'] },
-                { step:3, msg:"3. Store mapping (short, long) in Database.", show:['client','api','arr1','idgen','arr2','db','arr3'] },
-                { step:4, msg:"4. Cache the mapping in Redis for fast reads.", show:['client','api','arr1','idgen','arr2','db','arr3','cache','arr4'] },
-                { step:5, msg:"5. On redirect, fetch from Cache and return 301/302.", show:['client','api','arr1','idgen','arr2','db','arr3','cache','arr4','arr5'] }
-            ];
-        },
-        render: (ctx, fr, s) => {
-            const sh = (id) => fr.show.includes(id);
-            if(sh('client')) box(ctx, 50, 140, 100, 60, 'Client', SURF2, LINE);
-            if(sh('api')) box(ctx, 250, 140, 120, 60, 'API Server', SURF2, BLUE);
-            if(sh('arr1')) arrow(ctx, 150, 170, 250, 170, DIM, 'POST /create');
-            if(sh('idgen')) box(ctx, 450, 60, 120, 50, 'ID Gen', SURF2, AMBER, 'Base62');
-            if(sh('arr2')) arrow(ctx, 310, 140, 450, 90, DIM, 'get ID');
-            if(sh('db')) dbCyl(ctx, 450, 220, 120, 70, 'Database', SURF2, GREEN);
-            if(sh('arr3')) arrow(ctx, 370, 180, 450, 240, DIM, 'insert');
-            if(sh('cache')) box(ctx, 500, 140, 120, 50, 'Redis', SURF2, RED, 'Cache');
-            if(sh('arr4')) arrow(ctx, 370, 170, 500, 170, DIM, 'set');
-            if(sh('arr5')) arrow(ctx, 250, 190, 150, 190, GREEN, '302 Redirect');
-        }
-    },
-    {
-        id: 'ratelimit', name: 'Rate Limiter', cat: 'Infrastructure',
-        concepts: ['Algorithms: Token Bucket, Sliding Window Log, Fixed Window', 'Distributed Rate Limiting via Redis INCR + EXPIRE', 'Header conventions (X-RateLimit-Remaining)', 'Where to place: Client vs Gateway vs Server'],
-        questions: ['How to rate limit distributed across 3 servers?', 'Token bucket vs sliding window tradeoffs?', 'How to handle bursty traffic?'],
-        numbers: [{v:'100K',l:'Ops/sec Redis'}, {v:'10M',l:'Users capacity'}, {v:'<1ms',l:'Overhead'}],
-        tradeoffs: { gain: 'Protects backend from DDoS and abusive scraping.', cost: 'Adds latency to every request; Redis becomes a critical dependency.' },
-        build: () => {
-            return [
-                { step:1, msg:"1. Client request arrives at API Gateway.", show:['client','gw','arr1'] },
-                { step:2, msg:"2. Gateway checks Rate Limiter middleware.", show:['client','gw','arr1','rl'] },
-                { step:3, msg:"3. Rate Limiter queries Redis for current token count.", show:['client','gw','arr1','rl','redis','arr2'] },
-                { step:4, msg:"4. If allowed, request forwarded to Backend.", show:['client','gw','arr1','rl','redis','arr2','back','arr3'] },
-                { step:5, msg:"5. If blocked, returns 429 Too Many Requests.", show:['client','gw','arr1','rl','redis','arr2','back','arr3','arr4'] }
-            ];
-        },
-        render: (ctx, fr) => {
-            const sh = (id) => fr.show.includes(id);
-            if(sh('client')) box(ctx, 50, 140, 100, 60, 'Client', SURF2, LINE);
-            if(sh('gw')) box(ctx, 250, 100, 140, 140, 'API Gateway', SURF, LINE);
-            if(sh('arr1')) arrow(ctx, 150, 170, 250, 170, DIM, 'Request');
-            if(sh('rl')) box(ctx, 270, 150, 100, 40, 'Rate Limiter', SURF2, BLUE);
-            if(sh('redis')) dbCyl(ctx, 260, 280, 120, 50, 'Redis', SURF2, RED);
-            if(sh('arr2')) arrow(ctx, 320, 190, 320, 280, DIM, 'Check & INCR');
-            if(sh('back')) box(ctx, 550, 140, 120, 60, 'Backend', SURF2, GREEN);
-            if(sh('arr3')) arrow(ctx, 390, 170, 550, 170, GREEN, 'Allow');
-            if(sh('arr4')) arrow(ctx, 250, 190, 150, 190, RED, '429 Block');
-        }
-    },
-    {
-        id: 'consistent', name: 'Consistent Hashing', cat: 'Distributed',
-        concepts: ['Hash Ring mapping keys and nodes', 'Virtual Nodes (150-200 per physical server)', 'Minimizes key redistribution on scaling', 'Prevents hot spots in distributed caches'],
-        questions: ['What happens when a node fails?', 'Why use virtual nodes?', 'How does modulo hashing fail at scale?'],
-        numbers: [{v:'1/N',l:'Keys moved'}, {v:'~200',l:'VNodes/Server'}, {v:'O(log N)',l:'Lookup'}],
-        tradeoffs: { gain: 'Smooth scaling without massive cache invalidation.', cost: 'Slightly more complex routing logic and metadata management.' },
-        build: () => {
-            return [
-                { step:1, msg:"1. A hash space represented as a ring (0 to 2^32-1).", show:['ring'] },
-                { step:2, msg:"2. Physical Nodes A, B, C placed on ring via hash(IP).", show:['ring','nodes'] },
-                { step:3, msg:"3. Keys mapped to nearest node clockwise.", show:['ring','nodes','keys'] },
-                { step:4, msg:"4. Adding Node D only remaps keys from C to D.", show:['ring','nodes','keys','nodeD'] },
-                { step:5, msg:"5. Virtual nodes distribute load evenly.", show:['ring','nodes','keys','nodeD','vnodes'] }
-            ];
-        },
-        render: (ctx, fr) => {
-            const sh = (id) => fr.show.includes(id);
-            const cx=450, cy=170, r=120;
-            if(sh('ring')){
-                ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
-                ctx.strokeStyle=LINE; ctx.lineWidth=3; ctx.stroke();
-            }
-            const drawNode = (ang, label, color) => {
-                const x = cx + r*Math.cos(ang), y = cy + r*Math.sin(ang);
-                ctx.beginPath(); ctx.arc(x,y,12,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
-                lbl(ctx,label,x + (Math.cos(ang)*20), y + (Math.sin(ang)*20), 14, color, 'center', true);
-            };
-            const drawKey = (ang, label) => {
-                const x = cx + r*Math.cos(ang), y = cy + r*Math.sin(ang);
-                ctx.beginPath(); ctx.rect(x-5,y-5,10,10); ctx.fillStyle=AMBER; ctx.fill();
-                lbl(ctx,label,x - (Math.cos(ang)*20), y - (Math.sin(ang)*20), 11, AMBER);
-            };
-            if(sh('nodes')){ drawNode(0, 'A', BLUE); drawNode(Math.PI*2/3, 'B', BLUE); drawNode(Math.PI*4/3, 'C', BLUE); }
-            if(sh('keys')){ drawKey(0.5, 'k1'); drawKey(2.5, 'k2'); drawKey(4.5, 'k3'); }
-            if(sh('nodeD')){
-                drawNode(Math.PI*5/3, 'D', GREEN);
-                arrow(ctx, cx + (r-30)*Math.cos(5), cy + (r-30)*Math.sin(5), cx + r*Math.cos(Math.PI*5/3)-10, cy + r*Math.sin(Math.PI*5/3)-10, GREEN);
-            }
-            if(sh('vnodes')){
-                for(let i=0; i<12; i++){
-                    const ang = i*Math.PI/6 + 0.1;
-                    const x = cx + r*Math.cos(ang), y = cy + r*Math.sin(ang);
-                    ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fillStyle=DIM; ctx.fill();
-                }
-            }
-        }
-    },
-    {
-        id: 'loadbalancer', name: 'Load Balancer', cat: 'Infrastructure',
-        concepts: ['L4 (Transport) vs L7 (Application) routing', 'Algorithms: Round Robin, Least Conn, IP Hash', 'Active Health Checks', 'Sticky Sessions / Session Affinity', 'Active-Passive HA setup'],
-        questions: ['How to maintain sessions across multiple servers?', 'L4 vs L7 tradeoffs?', 'How do you avoid the LB becoming a single point of failure?'],
-        numbers: [{v:'1M+',l:'Req/sec'}, {v:'5-30s',l:'Health Checks'}, {v:'Layer 4/7',l:'Routing'}],
-        tradeoffs: { gain: 'High availability and horizontal scalability.', cost: 'LB itself is a potential bottleneck/SPOF if not clustered.' },
-        build: () => {
-            return [
-                { step:1, msg:"1. Clients send requests to a single IP.", show:['clients','arr1'] },
-                { step:2, msg:"2. Load Balancer receives traffic.", show:['clients','arr1','lb'] },
-                { step:3, msg:"3. LB periodically health-checks backends.", show:['clients','arr1','lb','servers','hc'] },
-                { step:4, msg:"4. LB routes to Server 1 via algorithm (e.g. Least Conn).", show:['clients','arr1','lb','servers','hc','route1'] },
-                { step:5, msg:"5. Next request goes to Server 2.", show:['clients','arr1','lb','servers','hc','route1','route2'] }
-            ];
-        },
-        render: (ctx, fr) => {
-            const sh = (id) => fr.show.includes(id);
-            if(sh('clients')){
-                box(ctx, 40, 100, 80, 40, 'Client 1', SURF2, LINE);
-                box(ctx, 40, 200, 80, 40, 'Client 2', SURF2, LINE);
-            }
-            if(sh('arr1')){
-                arrow(ctx, 120, 120, 250, 150, DIM);
-                arrow(ctx, 120, 220, 250, 190, DIM);
-            }
-            if(sh('lb')) box(ctx, 250, 130, 120, 80, 'Load Balancer', SURF2, BLUE, 'L7 Nginx');
-            
-            if(sh('servers')){
-                box(ctx, 500, 70, 100, 50, 'Server 1', SURF2, GREEN);
-                box(ctx, 500, 145, 100, 50, 'Server 2', SURF2, GREEN);
-                box(ctx, 500, 220, 100, 50, 'Server 3', SURF2, RED, 'Down');
-            }
-            if(sh('hc')){
-                arrow(ctx, 370, 170, 500, 95, DIM, 'check');
-                arrow(ctx, 370, 170, 500, 170, DIM, 'check');
-                arrow(ctx, 370, 170, 500, 245, RED, 'fail');
-            }
-            if(sh('route1')) arrow(ctx, 370, 150, 500, 95, GREEN, 'Req 1');
-            if(sh('route2')) arrow(ctx, 370, 190, 500, 170, BLUE, 'Req 2');
-        }
-    },
-    {
-        id: 'cache', name: 'Cache (Redis)', cat: 'Performance',
-        concepts: ['Patterns: Cache-Aside, Write-Through, Write-Behind', 'Eviction: LRU, LFU, TTL', 'Thundering Herd & Cache Stampede prevention', 'Hot Key problems'],
-        questions: ['How do you handle cache invalidation?', 'What is a cache stampede and how do you prevent it?', 'Redis vs Memcached?'],
-        numbers: [{v:'<1ms',l:'Latency'}, {v:'1M+',l:'Ops/sec'}, {v:'O(1)',l:'Access'}],
-        tradeoffs: { gain: 'Massively reduces DB load and latency.', cost: 'Data staleness, complex invalidation logic.' },
-        build: () => {
-            return [
-                { step:1, msg:"1. App receives read request.", show:['app'] },
-                { step:2, msg:"2. App checks Redis (Cache-Aside).", show:['app','redis','arr1'] },
-                { step:3, msg:"3. Cache Miss! (Data not found/expired).", show:['app','redis','arr1','miss'] },
-                { step:4, msg:"4. App fetches from DB.", show:['app','redis','arr1','miss','db','arr2'] },
-                { step:5, msg:"5. App writes result back to Cache for next time.", show:['app','redis','arr1','miss','db','arr2','arr3'] }
-            ];
-        },
-        render: (ctx, fr) => {
-            const sh = (id) => fr.show.includes(id);
-            if(sh('app')) box(ctx, 100, 140, 120, 60, 'App Server', SURF2, LINE);
-            if(sh('redis')) box(ctx, 350, 60, 120, 60, 'Redis', SURF2, RED, 'Cache');
-            if(sh('arr1')) arrow(ctx, 160, 140, 350, 90, DIM, '1. Get(key)');
-            if(sh('miss')) lbl(ctx, 'Miss', 250, 80, 12, RED, 'center', true);
-            if(sh('db')) dbCyl(ctx, 350, 220, 120, 70, 'Database', SURF2, GREEN);
-            if(sh('arr2')) arrow(ctx, 180, 200, 350, 250, DIM, '2. Fetch from DB');
-            if(sh('arr3')) arrow(ctx, 220, 140, 350, 100, GREEN, '3. Set(key, val)');
-        }
-    },
-    {
-        id: 'kafka', name: 'Message Queue (Kafka)', cat: 'Async',
-        concepts: ['Producers, Consumers, Topics, Partitions', 'Consumer Groups (scaling reads)', 'Offsets and Retention', 'At-least-once vs Exactly-once semantics'],
-        questions: ['How do you guarantee message ordering?', 'What is a consumer group?', 'Kafka vs RabbitMQ?'],
-        numbers: [{v:'1M+',l:'Msgs/sec'}, {v:'7 days',l:'Retention (avg)'}, {v:'O(1)',l:'Disk Read'}],
-        tradeoffs: { gain: 'Decoupling, async processing, buffering bursts.', cost: 'Complex cluster management (ZooKeeper/KRaft), eventual consistency.' },
-        build: () => {
-            return [
-                { step:1, msg:"1. Producers publish messages to a Topic.", show:['prod','topic','arr1'] },
-                { step:2, msg:"2. Topic is split into Partitions for scale.", show:['prod','topic','arr1','parts'] },
-                { step:3, msg:"3. Consumer Group reads from partitions.", show:['prod','topic','arr1','parts','cg1','arr2'] },
-                { step:4, msg:"4. Offsets track what has been read.", show:['prod','topic','arr1','parts','cg1','arr2','offsets'] },
-                { step:5, msg:"5. Multiple groups can read the same topic independently.", show:['prod','topic','arr1','parts','cg1','arr2','offsets','cg2','arr3'] }
-            ];
-        },
-        render: (ctx, fr) => {
-            const sh = (id) => fr.show.includes(id);
-            if(sh('prod')) {
-                box(ctx, 50, 100, 90, 40, 'Producer 1', SURF2, LINE);
-                box(ctx, 50, 160, 90, 40, 'Producer 2', SURF2, LINE);
-            }
-            if(sh('topic')) box(ctx, 250, 80, 200, 140, 'Topic (Events)', SURF, LINE);
-            if(sh('parts')) {
-                box(ctx, 270, 110, 160, 30, 'P0', SURF2, DIM);
-                box(ctx, 270, 150, 160, 30, 'P1', SURF2, DIM);
-                box(ctx, 270, 190, 160, 30, 'P2', SURF2, DIM);
-            }
-            if(sh('arr1')){ arrow(ctx, 140, 120, 250, 120, DIM); arrow(ctx, 140, 180, 250, 160, DIM); }
-            
-            if(sh('cg1')) box(ctx, 600, 60, 120, 80, 'Group A', SURF2, BLUE, 'Analytics');
-            if(sh('arr2')) arrow(ctx, 450, 120, 600, 100, BLUE, 'poll()');
-            
-            if(sh('offsets')){
-                lbl(ctx, 'offset=42', 350, 125, 10, AMBER);
-                lbl(ctx, 'offset=12', 350, 165, 10, AMBER);
-            }
-            
-            if(sh('cg2')) box(ctx, 600, 180, 120, 80, 'Group B', SURF2, GREEN, 'Emails');
-            if(sh('arr3')) arrow(ctx, 450, 180, 600, 200, GREEN, 'poll()');
-        }
-    },
-    {
-        id: 'database', name: 'Database Design', cat: 'Storage',
-        concepts: ['Primary-Replica (Read Replicas)', 'Sharding (Horizontal Scaling)', 'ACID vs BASE, CAP Theorem', 'Indexes (B-Tree, Hash)'],
-        questions: ['When to use NoSQL vs SQL?', 'How do you shard a user table safely?', 'What is replication lag?'],
-        numbers: [{v:'10K',l:'Writes/sec'}, {v:'0.1ms',l:'SSD latency'}, {v:'3+',l:'Replicas'}],
-        tradeoffs: { gain: 'Scales storage and read throughput massively.', cost: 'Sharding joins are hard; replication lag can cause stale reads.' },
-        build: () => {
-            return [
-                { step:1, msg:"1. App writes to Primary DB.", show:['app','dbP','arr1'] },
-                { step:2, msg:"2. Primary async replicates to Replicas.", show:['app','dbP','arr1','dbR','arr2'] },
-                { step:3, msg:"3. App reads from Replicas (scales reads).", show:['app','dbP','arr1','dbR','arr2','arr3'] },
-                { step:4, msg:"4. Data grows too large: Sharding needed.", show:['app','dbP','arr1','dbR','arr2','arr3','shard'] },
-                { step:5, msg:"5. Routing layer maps UserID to specific Shard.", show:['app','dbP','arr1','dbR','arr2','arr3','shard','router'] }
-            ];
-        },
-        render: (ctx, fr) => {
-            const sh = (id) => fr.show.includes(id);
-            if(sh('app')) box(ctx, 50, 130, 100, 60, 'App', SURF2, LINE);
-            if(sh('dbP')) dbCyl(ctx, 300, 40, 100, 60, 'Primary', SURF2, BLUE);
-            if(sh('arr1')) arrow(ctx, 150, 150, 300, 70, DIM, 'Write');
-            if(sh('dbR')){
-                dbCyl(ctx, 500, 40, 80, 50, 'Replica 1', SURF2, GREEN);
-                dbCyl(ctx, 500, 110, 80, 50, 'Replica 2', SURF2, GREEN);
-            }
-            if(sh('arr2')){ arrow(ctx, 400, 70, 500, 60, DIM, 'sync'); arrow(ctx, 400, 70, 500, 130, DIM, 'sync'); }
-            if(sh('arr3')) arrow(ctx, 500, 140, 150, 160, GREEN, 'Read');
-            
-            if(sh('shard')){
-                dbCyl(ctx, 400, 220, 90, 60, 'Shard 1', SURF2, AMBER, 'A-M');
-                dbCyl(ctx, 520, 220, 90, 60, 'Shard 2', SURF2, AMBER, 'N-Z');
-            }
-            if(sh('router')){
-                box(ctx, 250, 230, 90, 40, 'Router', SURF2, PURPLE);
-                arrow(ctx, 150, 170, 250, 240, DIM);
-                arrow(ctx, 340, 250, 400, 250, DIM);
-                arrow(ctx, 340, 250, 520, 250, DIM);
-            }
-        }
-    },
-    {
-        id: 'cdn', name: 'CDN', cat: 'Performance',
-        concepts: ['Edge Nodes (PoPs)', 'Push vs Pull CDN', 'Cache-Control headers, TTL', 'Invalidation & Purging'],
-        questions: ['How does a CDN reduce latency?', 'How do you handle dynamic content with CDNs?', 'Push vs pull tradeoffs?'],
-        numbers: [{v:'20ms',l:'Edge Latency'}, {v:'70%',l:'Traffic Served'}, {v:'<100km',l:'To User'}],
-        tradeoffs: { gain: 'Dramatically lower latency for static assets globally.', cost: 'Cost, cache invalidation delays.' },
-        build: () => {
-            return [
-                { step:1, msg:"1. Users request assets globally (US, EU).", show:['users'] },
-                { step:2, msg:"2. DNS routes to nearest CDN Edge node.", show:['users','edges','arr1'] },
-                { step:3, msg:"3. Cache Miss: Edge fetches from Origin.", show:['users','edges','arr1','origin','arr2'] },
-                { step:4, msg:"4. Origin responds, Edge caches it.", show:['users','edges','arr1','origin','arr2','arr3'] },
-                { step:5, msg:"5. Next user gets instant Cache Hit.", show:['users','edges','arr1','origin','arr2','arr3','arr4'] }
-            ];
-        },
-        render: (ctx, fr) => {
-            const sh = (id) => fr.show.includes(id);
-            if(sh('users')){
-                box(ctx, 50, 60, 80, 40, 'User (US)', SURF2, LINE);
-                box(ctx, 50, 220, 80, 40, 'User (EU)', SURF2, LINE);
-            }
-            if(sh('edges')){
-                box(ctx, 250, 60, 100, 50, 'Edge (US)', SURF2, BLUE);
-                box(ctx, 250, 220, 100, 50, 'Edge (EU)', SURF2, BLUE);
-            }
-            if(sh('arr1')){
-                arrow(ctx, 130, 80, 250, 80, DIM);
-                arrow(ctx, 130, 240, 250, 240, DIM);
-            }
-            if(sh('origin')) box(ctx, 600, 140, 120, 70, 'Origin Server', SURF2, AMBER);
-            if(sh('arr2')){ arrow(ctx, 350, 80, 600, 160, DIM, 'Pull (Miss)'); }
-            if(sh('arr3')){ arrow(ctx, 600, 150, 350, 90, GREEN, 'Cache'); }
-            if(sh('arr4')){ arrow(ctx, 250, 230, 130, 230, GREEN, 'Hit (Fast)'); }
-        }
-    },
-    {
-        id: 'lock', name: 'Distributed Locking', cat: 'Distributed',
-        concepts: ['Redis SETNX + EXPIRE (Atomic)', 'Redlock Algorithm (Quorum)', 'Fencing tokens to prevent stale writes', 'Deadlock prevention via TTL'],
-        questions: ['What if the lock holder crashes?', 'What is the Redlock algorithm?', 'How to prevent a paused process from writing stale data?'],
-        numbers: [{v:'30-60s',l:'TTL Default'}, {v:'2N+1',l:'Redlock Nodes'}, {v:'<5ms',l:'Acquire time'}],
-        tradeoffs: { gain: 'Prevents race conditions in distributed systems.', cost: 'Locking adds latency; GC pauses can violate lock safety.' },
-        build: () => {
-            return [
-                { step:1, msg:"1. Service A wants exclusive access to a resource.", show:['svca','res'] },
-                { step:2, msg:"2. A calls Redis SETNX lock_key with TTL.", show:['svca','res','redis','arr1'] },
-                { step:3, msg:"3. Lock acquired! A accesses resource.", show:['svca','res','redis','arr1','arr2'] },
-                { step:4, msg:"4. Service B tries to acquire lock and fails (waiting).", show:['svca','res','redis','arr1','arr2','svcb','arr3'] },
-                { step:5, msg:"5. A finishes and DEL the lock. B can now acquire.", show:['svca','res','redis','arr1','arr2','svcb','arr3','arr4'] }
-            ];
-        },
-        render: (ctx, fr) => {
-            const sh = (id) => fr.show.includes(id);
-            if(sh('svca')) box(ctx, 50, 60, 100, 50, 'Service A', SURF2, LINE);
-            if(sh('res')) box(ctx, 550, 130, 120, 60, 'DB / Resource', SURF2, AMBER);
-            if(sh('redis')) box(ctx, 300, 130, 100, 60, 'Redis', SURF2, RED, 'Lock Manager');
-            if(sh('arr1')) arrow(ctx, 150, 80, 300, 140, GREEN, 'SETNX OK');
-            if(sh('arr2')) arrow(ctx, 150, 70, 550, 150, GREEN, 'Write');
-            if(sh('svcb')) box(ctx, 50, 220, 100, 50, 'Service B', SURF2, LINE);
-            if(sh('arr3')) arrow(ctx, 150, 240, 300, 170, RED, 'SETNX Fail');
-            if(sh('arr4')) arrow(ctx, 300, 130, 150, 90, DIM, 'DEL (Release)');
-        }
-    },
-    {
-        id: 'search', name: 'Search System', cat: 'Search',
-        concepts: ['Inverted Index mapping terms to document IDs', 'Tokenization, Stemming, Stop words', 'TF-IDF & BM25 Relevance Scoring', 'Sharding the index for massive scale'],
-        questions: ['What is an inverted index?', 'How does Elasticsearch scale?', 'How to implement type-ahead autocomplete?'],
-        numbers: [{v:'<10ms',l:'Query p99'}, {v:'50GB',l:'Max Shard Size'}, {v:'1B+',l:'Docs/Cluster'}],
-        tradeoffs: { gain: 'Lightning fast full-text search.', cost: 'High RAM usage, complex to tune relevance, eventual consistency.' },
-        build: () => {
-            return [
-                { step:1, msg:"1. Crawler sends Document to Indexer.", show:['crawl','index','arr1'] },
-                { step:2, msg:"2. Indexer tokenizes text into terms.", show:['crawl','index','arr1','tok'] },
-                { step:3, msg:"3. Builds Inverted Index (term -> doc_ids).", show:['crawl','index','arr1','tok','inv'] },
-                { step:4, msg:"4. User queries terms.", show:['crawl','index','arr1','tok','inv','user','arr2'] },
-                { step:5, msg:"5. Intersect posting lists, rank via BM25, return.", show:['crawl','index','arr1','tok','inv','user','arr2','rank'] }
-            ];
-        },
-        render: (ctx, fr) => {
-            const sh = (id) => fr.show.includes(id);
-            if(sh('crawl')) box(ctx, 50, 60, 100, 50, 'Crawler', SURF2, LINE);
-            if(sh('index')) box(ctx, 250, 60, 120, 50, 'Indexer', SURF2, BLUE);
-            if(sh('arr1')) arrow(ctx, 150, 85, 250, 85, DIM, 'Doc');
-            if(sh('tok')) lbl(ctx, 'Text -> ["hello", "world"]', 310, 130, 11, DIM);
-            if(sh('inv')) {
-                box(ctx, 500, 40, 160, 120, 'Inverted Index', SURF, LINE);
-                lbl(ctx, '"hello" -> [d1, d4, d9]', 580, 80, 12, AMBER);
-                lbl(ctx, '"world" -> [d2, d4]', 580, 110, 12, AMBER);
-            }
-            if(sh('user')) box(ctx, 50, 220, 100, 50, 'User', SURF2, LINE);
-            if(sh('arr2')) arrow(ctx, 150, 245, 500, 120, DIM, 'Search "hello"');
-            if(sh('rank')) box(ctx, 300, 200, 120, 50, 'Ranker (BM25)', SURF2, GREEN);
-        }
-    },
-    {
-        id: 'notify', name: 'Notification System', cat: 'Real-time',
-        concepts: ['Fan-out pattern (1 event -> N notifications)', 'Channels: APNs, FCM, SMS, Email', 'Deduplication and rate limiting per user', 'WebSockets for real-time in-app'],
-        questions: ['How to ensure at-least-once delivery?', 'How to handle 1M concurrent connections?', 'Push vs pull for notifications?'],
-        numbers: [{v:'Millions',l:'Push/sec'}, {v:'<1s',l:'Latency'}, {v:'65K',l:'Conns/Server'}],
-        tradeoffs: { gain: 'Engages users immediately across platforms.', cost: 'Third-party delivery (APNs/FCM) can be flaky; fan-out is resource heavy.' },
-        build: () => {
-            return [
-                { step:1, msg:"1. Event triggers notification (e.g. new message).", show:['event','notif','arr1'] },
-                { step:2, msg:"2. Fetch user preferences & devices from DB.", show:['event','notif','arr1','db','arr2'] },
-                { step:3, msg:"3. Fan-out to specific Channel Workers via Queues.", show:['event','notif','arr1','db','arr2','q','workers'] },
-                { step:4, msg:"4. Workers call external APIs (APNs, FCM, SMS).", show:['event','notif','arr1','db','arr2','q','workers','ext'] },
-                { step:5, msg:"5. Retries on failure, WebSockets for active apps.", show:['event','notif','arr1','db','arr2','q','workers','ext','ws'] }
-            ];
-        },
-        render: (ctx, fr) => {
-            const sh = (id) => fr.show.includes(id);
-            if(sh('event')) box(ctx, 30, 140, 80, 50, 'Event', SURF2, LINE);
-            if(sh('notif')) box(ctx, 200, 130, 120, 60, 'Notify Svc', SURF2, BLUE);
-            if(sh('arr1')) arrow(ctx, 110, 160, 200, 160, DIM);
-            if(sh('db')) dbCyl(ctx, 190, 240, 140, 50, 'User Prefs DB', SURF2, GREEN);
-            if(sh('arr2')) arrow(ctx, 260, 190, 260, 240, DIM);
-            if(sh('q')) box(ctx, 400, 130, 60, 140, 'Kafka', SURF2, RED);
-            if(sh('workers')) {
-                box(ctx, 520, 60, 80, 40, 'iOS Wrk', SURF2, LINE);
-                box(ctx, 520, 130, 80, 40, 'And Wrk', SURF2, LINE);
-                box(ctx, 520, 200, 80, 40, 'SMS Wrk', SURF2, LINE);
-                arrow(ctx, 320, 160, 400, 160, DIM);
-                arrow(ctx, 460, 150, 520, 80, DIM);
-                arrow(ctx, 460, 170, 520, 150, DIM);
-                arrow(ctx, 460, 190, 520, 220, DIM);
-            }
-            if(sh('ext')){
-                lbl(ctx, 'APNs', 650, 80, 12, DIM);
-                lbl(ctx, 'FCM', 650, 150, 12, DIM);
-                lbl(ctx, 'Twilio', 650, 220, 12, DIM);
-            }
-            if(sh('ws')) box(ctx, 520, 270, 140, 40, 'WebSocket Svc', SURF2, GREEN);
-        }
-    },
-    {
-        id: 'twitter', name: 'Twitter / News Feed', cat: 'Social',
-        concepts: ['Fan-out on Write (Push) vs Fan-out on Read (Pull)', 'The Celebrity Problem (hybrid approach)', 'Timeline caching in Redis Sorted Sets', 'Eventual consistency for massive scale'],
-        questions: ['How to handle a celebrity with 100M followers?', 'What is fan-out on write?', 'How do you design the feed timeline?'],
-        numbers: [{v:'500M',l:'Tweets/Day'}, {v:'200',l:'Avg Followers'}, {v:'O(1)',l:'Feed Read'}],
-        tradeoffs: { gain: 'O(1) read latency for timelines.', cost: 'O(N) write cost (fan-out); requires hybrid logic for celebrities.' },
-        build: () => {
-            return [
-                { step:1, msg:"1. User posts a Tweet via Write API.", show:['user','api','arr1'] },
-                { step:2, msg:"2. Fan-out service gets follower list.", show:['user','api','arr1','fan','arr2'] },
-                { step:3, msg:"3. (Normal User) Push tweet ID to follower Redis caches.", show:['user','api','arr1','fan','arr2','redis','arr3'] },
-                { step:4, msg:"4. Followers read pre-computed feed in O(1) time.", show:['user','api','arr1','fan','arr2','redis','arr3','read','arr4'] },
-                { step:5, msg:"5. (Celebrity) Pull logic merges hot tweets at read time.", show:['user','api','arr1','fan','arr2','redis','arr3','read','arr4','celeb'] }
-            ];
-        },
-        render: (ctx, fr) => {
-            const sh = (id) => fr.show.includes(id);
-            if(sh('user')) box(ctx, 30, 80, 80, 50, 'User', SURF2, LINE);
-            if(sh('api')) box(ctx, 180, 80, 100, 50, 'Write API', SURF2, BLUE);
-            if(sh('arr1')) arrow(ctx, 110, 105, 180, 105, DIM, 'Tweet');
-            if(sh('fan')) box(ctx, 350, 80, 120, 50, 'Fan-out Svc', SURF2, PURPLE);
-            if(sh('arr2')) arrow(ctx, 280, 105, 350, 105, DIM);
-            if(sh('redis')){
-                dbCyl(ctx, 550, 40, 120, 50, 'User A Feed', SURF2, RED);
-                dbCyl(ctx, 550, 110, 120, 50, 'User B Feed', SURF2, RED);
-            }
-            if(sh('arr3')){ arrow(ctx, 470, 105, 550, 65, RED, 'Push'); arrow(ctx, 470, 105, 550, 135, RED, 'Push'); }
-            
-            if(sh('read')) box(ctx, 750, 75, 100, 50, 'Followers', SURF2, LINE);
-            if(sh('arr4')) arrow(ctx, 670, 65, 750, 85, GREEN, 'Read');
-            
-            if(sh('celeb')){
-                box(ctx, 350, 200, 120, 50, 'Celeb Tweets', SURF, AMBER);
-                arrow(ctx, 750, 110, 470, 220, AMBER, 'Pull on read');
-            }
-        }
-    }
+  {id:'lb', group:'Traffic', title:'Load Balancing', eyebrow:'Distribute requests', 
+   dek:'Spread incoming traffic across multiple servers so no single instance is overwhelmed, and route around unhealthy nodes automatically.'},
+  {id:'cache', group:'Traffic', title:'Caching (Cache-Aside)', eyebrow:'Cut read latency',
+   dek:'Serve hot reads from a fast in-memory store, and only fall through to the database when the cache misses.'},
+  {id:'cdn', group:'Traffic', title:'CDN', eyebrow:'Serve from the edge',
+   dek:'Push static and semi-static content to edge nodes near the user, so most requests never reach your origin at all.'},
+  {id:'rate', group:'Traffic', title:'Rate Limiting', eyebrow:'Protect capacity',
+   dek:'Bound how many requests a client can make in a window, using a token bucket that refills at a steady rate.'},
+  {id:'hash', group:'Data', title:'Consistent Hashing', eyebrow:'Scale without reshuffling',
+   dek:'Map both nodes and keys onto a ring, so adding or removing a node only remaps a small fraction of keys.'},
+  {id:'shard', group:'Data', title:'Sharding / Partitioning', eyebrow:'Split the dataset',
+   dek:'Break a large dataset across multiple databases by a shard key, so each node holds a manageable slice.'},
+  {id:'replica', group:'Data', title:'Replication', eyebrow:'Durability & read scale',
+   dek:'A leader accepts writes and streams them to followers, who serve reads and stand ready to take over on failure.'},
+  {id:'cap', group:'Data', title:'CAP Theorem', eyebrow:'Pick your trade-off',
+   dek:'During a network partition you must choose: keep answering with possibly stale data (AP), or refuse to answer until consistent (CP).'},
+  {id:'queue', group:'Async', title:'Message Queue / Pub-Sub', eyebrow:'Decouple producers & consumers',
+   dek:'A producer drops work onto a queue and moves on; independent consumers pull it at their own pace, absorbing spikes.'},
+  {id:'saga', group:'Async', title:'Payment Saga Pattern', eyebrow:'Distributed transactions',
+   dek:'Chain local transactions across services with a compensating action for each step, so a failure midway unwinds cleanly instead of leaving half a payment committed.'},
+  {id:'idem', group:'Async', title:'Idempotency Keys', eyebrow:'Safe retries',
+   dek:'Let a client safely retry a write after a timeout, without a network blip turning into a duplicate charge or duplicate order.'},
+  {id:'urlshort', group:'Mock Question', title:'URL Shortener (full design)', eyebrow:'End-to-end walkthrough',
+   dek:'A complete worked example — requirements, capacity estimate, API, data model, and architecture — showing how the patterns above combine into one answer.'},
+  {id:'ratelimiter', group:'Mock Question', title:'Distributed Rate Limiter', eyebrow:'End-to-end walkthrough',
+   dek:'Design the rate limiter itself as a service — shared state across gateway instances, algorithm choice, and where it sits in the request path.'},
+  {id:'newsfeed', group:'Mock Question', title:'News Feed (Twitter-style)', eyebrow:'End-to-end walkthrough',
+   dek:'Fan-out on write vs fan-out on read — the core trade-off behind every social timeline, and why most real systems do both.'},
+  {id:'chat', group:'Mock Question', title:'Chat System (WhatsApp-style)', eyebrow:'End-to-end walkthrough',
+   dek:'Real-time delivery, offline message storage, and the read-receipt problem — messaging systems live and die on connection state.'},
+  {id:'kvstore', group:'Mock Question', title:'Distributed Key-Value Store', eyebrow:'End-to-end walkthrough',
+   dek:'The building block behind Dynamo/Cassandra-style systems — consistent hashing, replication, and tunable consistency in one design.'},
+  {id:'ledger', group:'Mock Question', title:'Payment Ledger System', eyebrow:'End-to-end walkthrough',
+   dek:'Double-entry ledger, idempotent charges, and saga-based orchestration combined into the design most likely to come up in a fintech interview.'},
 ];
 
-let cur = TOPICS[0], frames = cur.build(), idx = 0;
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+const nav = document.getElementById('nav');
+const main = document.getElementById('main');
+let groups = [...new Set(TOPICS.map(t=>t.group))];
+groups.forEach(g=>{
+  const label = document.createElement('div');
+  label.className='grp-label'; label.textContent=g;
+  nav.appendChild(label);
+  TOPICS.filter(t=>t.group===g).forEach((t,i)=>{
+    const b=document.createElement('button');
+    b.dataset.id=t.id;
+    b.innerHTML=`<span class="num">${String(TOPICS.indexOf(t)+1).padStart(2,'0')}</span>${t.title}`;
+    b.onclick=()=>select(t.id);
+    nav.appendChild(b);
+  });
+});
 
-function renderUI() {
-    // Sidebar
-    const list = document.getElementById('topicList');
-    list.innerHTML = '';
-    TOPICS.forEach(t => {
-        const btn = document.createElement('button');
-        btn.className = 'topic-btn' + (t.id === cur.id ? ' active' : '');
-        btn.innerHTML = `<span class="topic-name">${t.name}</span><span class="topic-cat">${t.cat}</span>`;
-        btn.onclick = () => setTopic(t);
-        list.appendChild(btn);
+function topicShell(t, bodyHTML){
+  return `
+  <section class="topic" id="sec-${t.id}">
+    <div class="topic-head">
+      <div class="eyebrow">${t.eyebrow}</div>
+      <h2>${t.title}</h2>
+      <p class="dek">${t.dek}</p>
+    </div>
+    ${bodyHTML}
+  </section>`;
+}
+
+main.innerHTML = TOPICS.map(t => topicShell(t, BODIES[t.id]())).join('\n');
+
+function select(id){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.id===id));
+  document.querySelectorAll('section.topic').forEach(s=>s.classList.toggle('active', s.id==='sec-'+id));
+  window.scrollTo({top:0, behavior:'instant'});
+}
+select(TOPICS[0].id);
+
+// small helper for status text
+function setStatus(id, msg){ const el=document.getElementById(id); if(el) el.textContent = msg; }
+</script>
+
+<script>
+// ============ ANIMATION LOGIC ============
+const NS='http://www.w3.org/2000/svg';
+function el(tag, attrs){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+function animateAlong(group, x1,y1,x2,y2, color, duration, onDone){
+  const dot = el('circle',{cx:x1, cy:y1, r:7, fill:color});
+  group.appendChild(dot);
+  const start = performance.now();
+  function step(now){
+    const t = Math.min(1, (now-start)/duration);
+    dot.setAttribute('cx', x1 + (x2-x1)*t);
+    dot.setAttribute('cy', y1 + (y2-y1)*t);
+    if(t<1) requestAnimationFrame(step);
+    else { dot.remove(); if(onDone) onDone(); }
+  }
+  requestAnimationFrame(step);
+}
+
+/* ---------- Load Balancing ---------- */
+let lbIdx=0, lbDown={2:false};
+function lbRun(){
+  const g = document.getElementById('lb-packets');
+  const targets = {1:[540,57], 2:[540,129], 3:[540,201]};
+  let order=[1,2,3].filter(n=>!lbDown[n]);
+  const n = order[lbIdx % order.length]; lbIdx++;
+  setStatus('lb-status', `routing to Server ${n}`);
+  animateAlong(g, 55,120, 220,120, '#5EEAD4', 500, ()=>{
+    animateAlong(g, 265,120, targets[n][0], targets[n][1], '#5EEAD4', 500, ()=>{
+      setStatus('lb-status', `Server ${n} handled request`);
     });
-
-    // Header
-    document.getElementById('titleText').innerText = cur.name;
-    document.getElementById('catBadge').innerText = cur.cat;
-
-    // Data
-    document.getElementById('conceptsList').innerHTML = cur.concepts.map(c => `<li>${c}</li>`).join('');
-    document.getElementById('numbersList').innerHTML = cur.numbers.map(n => `<div class="number-pill">${n.v}<span>${n.l}</span></div>`).join('');
-    document.getElementById('qList').innerHTML = cur.questions.map(q => `<div class="q-item"><strong>Q:</strong> ${q}</div>`).join('');
-    
-    document.getElementById('tradeGain').innerText = cur.tradeoffs.gain;
-    document.getElementById('tradeCost').innerText = cur.tradeoffs.cost;
-
-    renderCanvas();
+  });
+}
+function lbFail(){
+  lbDown[2]=true;
+  const s2=document.getElementById('lb-s2');
+  s2.setAttribute('stroke', '#FF6B6B');
+  s2.setAttribute('fill', '#2A1218');
+  setStatus('lb-status', 'Server 2 marked unhealthy — removed from rotation');
+}
+function lbReset(){
+  lbIdx=0; lbDown={2:false};
+  const s2=document.getElementById('lb-s2');
+  s2.setAttribute('stroke','#1F3F66'); s2.setAttribute('fill','#0E2440');
+  document.getElementById('lb-packets').innerHTML='';
+  setStatus('lb-status','idle');
 }
 
-function setTopic(t) {
-    cur = t;
-    frames = cur.build();
-    idx = 0;
-    history.replaceState(null, '', '?topic=' + t.id);
-    renderUI();
+/* ---------- Cache ---------- */
+function cacheRun(mode){
+  const g = document.getElementById('cache-packets');
+  g.innerHTML='';
+  const label = document.getElementById('cache-label');
+  const box = document.getElementById('cache-box');
+  if(mode==='hit'){
+    setStatus('cache-status','cache hit — fast path');
+    label.textContent='HIT: cache → client (single hop)';
+    box.setAttribute('stroke','#5EEAD4');
+    animateAlong(g, 62,100, 320,100, '#5EEAD4', 450, ()=>{
+      animateAlong(g, 320,100, 62,100, '#5EEAD4', 450, ()=>{
+        setStatus('cache-status','done — served from cache');
+        box.setAttribute('stroke','#1F3F66');
+      });
+    });
+  } else {
+    setStatus('cache-status','cache miss — falling through to DB');
+    label.textContent='MISS: cache → DB → populate cache → client';
+    box.setAttribute('stroke','#FF6B6B');
+    animateAlong(g, 62,100, 320,100, '#5EEAD4', 400, ()=>{
+      box.setAttribute('stroke','#1F3F66');
+      animateAlong(g, 380,100, 620,100, '#5EEAD4', 450, ()=>{
+        animateAlong(g, 620,100, 380,100, '#FFB020', 450, ()=>{
+          document.getElementById('db-box').setAttribute('stroke','#1F3F66');
+          label.textContent='cache populated — next read will be a hit';
+          animateAlong(g, 320,100, 62,100, '#5EEAD4', 400, ()=>{
+            setStatus('cache-status','done — DB read, cache warmed');
+          });
+        });
+      });
+    });
+  }
+}
+function cacheReset(){
+  document.getElementById('cache-packets').innerHTML='';
+  document.getElementById('cache-label').textContent='';
+  document.getElementById('cache-box').setAttribute('stroke','#1F3F66');
+  document.getElementById('db-box').setAttribute('stroke','#1F3F66');
+  setStatus('cache-status','idle');
 }
 
-function renderCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const fr = frames[idx];
-    document.getElementById('stepInfo').innerText = `Step ${idx + 1} of ${frames.length}`;
-    document.getElementById('explanation').innerText = fr.msg;
-    
-    document.getElementById('btnPrev').disabled = (idx === 0);
-    document.getElementById('btnNext').disabled = (idx === frames.length - 1);
+/* ---------- CDN ---------- */
+function cdnRun(mode){
+  const g = document.getElementById('cdn-packets'); g.innerHTML='';
+  if(mode==='hit'){
+    setStatus('cdn-status','edge cache hit');
+    animateAlong(g, 62,110, 320,110, '#5EEAD4', 450, ()=>{
+      animateAlong(g, 320,110, 62,110, '#5EEAD4', 450, ()=>{
+        setStatus('cdn-status','served entirely from edge — origin untouched');
+      });
+    });
+  } else {
+    setStatus('cdn-status','edge miss — pulling from origin');
+    animateAlong(g, 62,110, 320,110, '#5EEAD4', 400, ()=>{
+      animateAlong(g, 390,110, 640,110, '#FF6B6B', 450, ()=>{
+        animateAlong(g, 640,110, 390,110, '#FFB020', 450, ()=>{
+          animateAlong(g, 320,110, 62,110, '#5EEAD4', 400, ()=>{
+            setStatus('cdn-status','origin fetched once, cached at edge for next time');
+          });
+        });
+      });
+    });
+  }
+}
+function cdnReset(){ document.getElementById('cdn-packets').innerHTML=''; setStatus('cdn-status','idle'); }
 
-    cur.render(ctx, fr);
+/* ---------- Rate limiting ---------- */
+let rateTokens=0, rateTimer=null;
+function renderTokens(){
+  const g=document.getElementById('rate-tokens'); g.innerHTML='';
+  for(let i=0;i<5;i++){
+    const filled = i < rateTokens;
+    const c = el('circle', {cx:85, cy:160-i*24, r:8, fill: filled? '#FFB020':'#16304F', stroke:'#1F3F66'});
+    g.appendChild(c);
+  }
+  document.getElementById('rate-count').textContent = rateTokens;
+}
+function rateRun(){
+  if(rateTimer) return;
+  rateTokens = Math.min(5, rateTokens+1);
+  renderTokens();
+  setStatus('rate-status','bucket refilling — 1 token/sec');
+  rateTimer = setInterval(()=>{
+    rateTokens = Math.min(5, rateTokens+1);
+    renderTokens();
+  }, 1000);
+}
+function rateBurst(){
+  const g = document.getElementById('rate-packets');
+  const rej = document.getElementById('rate-rejects');
+  for(let i=0;i<6;i++){
+    setTimeout(()=>{
+      if(rateTokens>0){
+        rateTokens--; renderTokens();
+        animateAlong(g, 130,115, 300,115, '#5EEAD4', 350, ()=>{
+          animateAlong(g, 410,115, 560,115, '#5EEAD4', 350);
+        });
+        setStatus('rate-status', `request allowed, token consumed`);
+      } else {
+        const t = el('text', {x:340, y:170, fill:'#FF6B6B', 'font-size':11});
+        t.textContent='429 rejected — no tokens'; rej.appendChild(t);
+        setTimeout(()=>t.remove(), 900);
+        setStatus('rate-status','request rejected — bucket empty');
+      }
+    }, i*260);
+  }
+}
+function rateReset(){
+  rateTokens=0; if(rateTimer){clearInterval(rateTimer); rateTimer=null;}
+  renderTokens();
+  document.getElementById('rate-packets').innerHTML='';
+  document.getElementById('rate-rejects').innerHTML='';
+  setStatus('rate-status','idle');
 }
 
-document.getElementById('btnPrev').onclick = () => { if(idx > 0) { idx--; renderCanvas(); } };
-document.getElementById('btnNext').onclick = () => { if(idx < frames.length - 1) { idx++; renderCanvas(); } };
-
-// Init
-const params = new URLSearchParams(window.location.search);
-if(params.has('topic')){
-    const t = TOPICS.find(x => x.id === params.get('topic'));
-    if(t) cur = t;
+/* ---------- Consistent hashing ---------- */
+let hashNodes=[30, 150, 260], hashKeyCount=0;
+const RING_CX=250, RING_CY=250, RING_R=180;
+function polar(deg){
+  const rad=(deg-90)*Math.PI/180;
+  return [RING_CX+RING_R*Math.cos(rad), RING_CY+RING_R*Math.sin(rad)];
 }
-frames = cur.build();
-renderUI();
+function renderRing(){
+  const ng=document.getElementById('hash-nodes'); ng.innerHTML='';
+  hashNodes.slice().sort((a,b)=>a-b).forEach((deg,i)=>{
+    const [x,y]=polar(deg);
+    ng.appendChild(el('circle',{cx:x,cy:y,r:9,fill:'#FFB020'}));
+    const [tx,ty]=polar(deg);
+    const t = el('text',{x:tx+ (Math.cos((deg-90)*Math.PI/180)>0?12:-45), y:ty, fill:'#FFB020','font-size':11});
+    t.textContent='N'+(i+1); ng.appendChild(t);
+  });
+}
+function nextNodeClockwise(deg){
+  const sorted = hashNodes.slice().sort((a,b)=>a-b);
+  for(const n of sorted) if(n>=deg) return n;
+  return sorted[0];
+}
+function hashPlaceKey(){
+  hashKeyCount++;
+  const deg = Math.random()*360;
+  const [kx,ky]=polar(deg);
+  const target = nextNodeClockwise(deg);
+  const [tx,ty]=polar(target);
+  const kg=document.getElementById('hash-keys');
+  const k = el('circle',{cx:kx,cy:ky,r:6,fill:'#5EEAD4'});
+  kg.appendChild(k);
+  const line = el('line',{x1:kx,y1:ky,x2:kx,y2:ky,stroke:'#5EEAD4','stroke-dasharray':'3 3'});
+  kg.appendChild(line);
+  const start=performance.now();
+  function step(now){
+    const t=Math.min(1,(now-start)/500);
+    line.setAttribute('x2', kx+(tx-kx)*t);
+    line.setAttribute('y2', ky+(ty-ky)*t);
+    if(t<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+  setStatus('hash-status', `key #${hashKeyCount} → next node clockwise`);
+}
+function hashAddNode(){
+  const deg = Math.random()*360;
+  hashNodes.push(deg);
+  renderRing();
+  setStatus('hash-status', `node added at ${deg.toFixed(0)}° — only keys between it and its neighbor remap`);
+}
+function hashReset(){
+  hashNodes=[30,150,260]; hashKeyCount=0;
+  renderRing();
+  document.getElementById('hash-keys').innerHTML='';
+  setStatus('hash-status','idle');
+}
+renderRing();
 
+/* ---------- Sharding ---------- */
+function shardRun(){
+  const mode = document.getElementById('shard-key-select').value;
+  const g = document.getElementById('shard-packets');
+  const labels = document.getElementById('shard-labels');
+  const targets = [[320,47,'A'],[320,120,'B'],[320,193,'C']];
+  for(let i=0;i<6;i++){
+    setTimeout(()=>{
+      let idx;
+      if(mode==='user'){ idx = Math.floor(Math.random()*3); }
+      else { idx = i<2?0:(i<4?1:2); } // range: sequential fill
+      const t = targets[idx];
+      setStatus('shard-status', `row ${i+1} → Shard ${t[2]}`);
+      animateAlong(g, 130,120, 300,120, '#5EEAD4', 350, ()=>{
+        animateAlong(g, 300,120, t[0], t[1], '#5EEAD4', 350);
+      });
+    }, i*380);
+  }
+}
+function shardReset(){
+  document.getElementById('shard-packets').innerHTML='';
+  setStatus('shard-status','idle');
+}
+
+/* ---------- Replication ---------- */
+function replRun(){
+  const g=document.getElementById('repl-packets');
+  setStatus('repl-status','client write → leader');
+  animateAlong(g, 62,120, 230,120, '#5EEAD4', 450, ()=>{
+    setStatus('repl-status','leader committed, streaming to followers async');
+    animateAlong(g, 360,105, 540,47, '#FFB020', 500);
+    animateAlong(g, 360,130, 540,187, '#FFB020', 500, ()=>{
+      setStatus('repl-status','replication complete — followers caught up');
+    });
+  });
+}
+function replFailover(){
+  const leader=document.getElementById('repl-leader');
+  leader.setAttribute('stroke','#FF6B6B'); leader.setAttribute('fill','#2A1218');
+  const f1=document.getElementById('repl-f1');
+  setStatus('repl-status','leader down — Follower 1 promoted to new leader');
+  setTimeout(()=>{ f1.setAttribute('stroke','#FFB020'); }, 500);
+}
+function replReset(){
+  document.getElementById('repl-packets').innerHTML='';
+  const leader=document.getElementById('repl-leader');
+  leader.setAttribute('stroke','#FFB020'); leader.setAttribute('fill','#0E2440');
+  document.getElementById('repl-f1').setAttribute('stroke','#1F3F66');
+  setStatus('repl-status','idle');
+}
+
+/* ---------- CAP ---------- */
+function capPartition(){
+  const link=document.getElementById('cap-link');
+  link.setAttribute('stroke','#FF6B6B'); link.setAttribute('stroke-dasharray','6 6');
+  const g=document.getElementById('cap-break');
+  g.innerHTML='';
+  const t=el('text',{x:375,y:95,fill:'#FF6B6B','font-size':20,'text-anchor':'middle'});
+  t.textContent='×'; g.appendChild(t);
+  document.getElementById('cap-verdict').textContent='Network partition — nodes cannot talk to each other. Now what?';
+  setStatus('cap-status','partition triggered');
+}
+function capChoose(mode){
+  const v=document.getElementById('cap-verdict');
+  if(mode==='CP'){
+    v.textContent='CP: Node A refuses writes/reads it can’t confirm are current — returns an error instead of stale data.';
+    setStatus('cap-status','chose Consistency — some requests fail during the partition');
+  } else {
+    v.textContent='AP: Node A keeps answering with its local data — may be stale, but never errors out.';
+    setStatus('cap-status','chose Availability — requests succeed, data may diverge');
+  }
+}
+function capReset(){
+  const link=document.getElementById('cap-link');
+  link.setAttribute('stroke','#1F3F66'); link.removeAttribute('stroke-dasharray');
+  document.getElementById('cap-break').innerHTML='';
+  document.getElementById('cap-verdict').textContent='';
+  setStatus('cap-status','idle');
+}
+
+/* ---------- Queue ---------- */
+let queueBuffer=[];
+function renderQueueMsgs(){
+  const g=document.getElementById('queue-messages'); g.innerHTML='';
+  queueBuffer.forEach((_,i)=>{
+    g.appendChild(el('rect',{x:295+ (i%6)*32, y:75+Math.floor(i/6)*30, width:24, height:20, rx:3, fill:'#FFB020'}));
+  });
+}
+function queueProduce(){
+  const g=document.getElementById('queue-packets');
+  animateAlong(g, 130,110,280,110,'#5EEAD4',400, ()=>{
+    queueBuffer.push(1); renderQueueMsgs();
+    setStatus('queue-status', `message queued (${queueBuffer.length} buffered)`);
+    setTimeout(()=>{
+      const targetsY=[42,110,178];
+      const idx=Math.floor(Math.random()*3);
+      animateAlong(g, 500,110,620,targetsY[idx],'#5EEAD4',450, ()=>{
+        queueBuffer.pop(); renderQueueMsgs();
+        setStatus('queue-status', `consumer ${idx+1} processed message`);
+      });
+    }, 500);
+  });
+}
+function queueBurst(){
+  for(let i=0;i<5;i++) setTimeout(queueProduce, i*220);
+}
+function queueReset(){
+  queueBuffer=[]; renderQueueMsgs();
+  document.getElementById('queue-packets').innerHTML='';
+  setStatus('queue-status','idle');
+}
+
+/* ---------- Saga ---------- */
+function sagaSetStep(n, color){
+  const el2 = document.getElementById('saga-s'+n);
+  if(el2) el2.setAttribute('stroke', color);
+}
+function sagaRun(mode){
+  sagaReset(false);
+  const seq = [1,2,3,4];
+  const failAt = mode==='fail' ? 3 : null;
+  let i=0;
+  function nextStep(){
+    if(i>=seq.length) { setStatus('saga-status','saga completed successfully'); return; }
+    const n = seq[i];
+    setStatus('saga-status', `step ${n} in progress...`);
+    sagaSetStep(n, '#5EEAD4');
+    setTimeout(()=>{
+      if(n===failAt){
+        sagaSetStep(n, '#FF6B6B');
+        setStatus('saga-status', `step ${n} FAILED — starting compensation`);
+        document.getElementById('saga-compensate').style.display='block';
+        setTimeout(()=>{
+          sagaSetStep(2,'#FF6B6B');
+          setTimeout(()=>{
+            sagaSetStep(1,'#FF6B6B');
+            setStatus('saga-status','compensated: stock released, order cancelled — system left consistent');
+          },600);
+        },600);
+        return;
+      }
+      sagaSetStep(n, '#FFB020');
+      i++;
+      setTimeout(nextStep, 300);
+    }, 650);
+  }
+  nextStep();
+}
+function sagaReset(resetStatus=true){
+  [1,2,3,4].forEach(n=>sagaSetStep(n,'#1F3F66'));
+  document.getElementById('saga-compensate').style.display='none';
+  if(resetStatus) setStatus('saga-status','idle');
+}
+
+/* ---------- Idempotency keys ---------- */
+let idemSeen=false;
+function idemRun(mode){
+  const g=document.getElementById('idem-packets');
+  const label=document.getElementById('idem-label');
+  if(mode==='first'){
+    idemSeen=true;
+    setStatus('idem-status','new key — checking store...');
+    animateAlong(g,62,110,230,110,'#5EEAD4',400, ()=>{
+      animateAlong(g,370,95,480,50,'#5EEAD4',400, ()=>{
+        label.textContent='key not found — process payment, store result under key';
+        animateAlong(g,370,125,480,175,'#5EEAD4',400, ()=>{
+          setStatus('idem-status','payment processed once, result cached under key abc123');
+        });
+      });
+    });
+  } else {
+    if(!idemSeen){
+      setStatus('idem-status','no original request yet — send the first one first');
+      return;
+    }
+    setStatus('idem-status','retry with same key — checking store...');
+    animateAlong(g,62,110,230,110,'#FFB020',400, ()=>{
+      animateAlong(g,370,95,480,50,'#FFB020',400, ()=>{
+        label.textContent='key found — replay stored response, DB untouched';
+        setStatus('idem-status','no duplicate charge — cached response returned');
+      });
+    });
+  }
+}
+function idemReset(){
+  idemSeen=false;
+  document.getElementById('idem-packets').innerHTML='';
+  document.getElementById('idem-label').textContent='';
+  setStatus('idem-status','idle');
+}
+
+/* ---------- URL shortener ---------- */
+function urlRun(mode){
+  const g=document.getElementById('url-packets');
+  const label=document.getElementById('url-label');
+  if(mode==='write'){
+    setStatus('url-status','shortening request → API layer');
+    animateAlong(g,57,110,200,110,'#5EEAD4',400, ()=>{
+      label.textContent='fetch next ID from generator';
+      animateAlong(g,330,108,640,110,'#5EEAD4',400, ()=>{
+        label.textContent='base62-encode ID → write mapping to sharded DB';
+        animateAlong(g,330,120,430,177,'#5EEAD4',400, ()=>{
+          setStatus('url-status','short URL created and persisted');
+        });
+      });
+    });
+  } else {
+    setStatus('url-status','resolving short code → API layer');
+    animateAlong(g,57,110,200,110,'#FFB020',400, ()=>{
+      label.textContent='cache check for hot link';
+      animateAlong(g,330,100,430,47,'#FFB020',400, ()=>{
+        label.textContent='cache hit — redirect issued, DB untouched';
+        animateAlong(g,330,100,57,110,'#FFB020',400, ()=>{
+          setStatus('url-status','redirect served from cache, low latency');
+        });
+      });
+    });
+  }
+}
+function urlReset(){
+  document.getElementById('url-packets').innerHTML='';
+  document.getElementById('url-label').textContent='';
+  setStatus('url-status','idle');
+}
+
+/* ---------- Rate limiter mock ---------- */
+function rlmRun(){
+  const g=document.getElementById('rlm-packets');
+  const label=document.getElementById('rlm-label');
+  setStatus('rlm-status','both gateways checking the same Redis counter');
+  animateAlong(g,150,55,310,105,'#5EEAD4',450);
+  animateAlong(g,150,165,310,120,'#5EEAD4',450, ()=>{
+    label.textContent='Redis: atomic INCR — 4th request over the limit';
+    animateAlong(g,460,112,600,112,'#5EEAD4',400, ()=>{
+      const rej=document.getElementById('rlm-packets');
+      const t=el('text',{x:380,y:70,fill:'#FF6B6B','font-size':11});
+      t.textContent='next request from either gateway → 429'; rej.appendChild(t);
+      setStatus('rlm-status','limit enforced consistently across both instances');
+    });
+  });
+}
+function rlmReset(){
+  document.getElementById('rlm-packets').innerHTML='';
+  document.getElementById('rlm-label').textContent='';
+  setStatus('rlm-status','idle');
+}
+
+/* ---------- News feed mock ---------- */
+function feedRun(mode){
+  const g=document.getElementById('feed-packets');
+  const label=document.getElementById('feed-label');
+  const targets=[[500,35],[500,110],[500,185]];
+  if(mode==='normal'){
+    setStatus('feed-status','fan-out on write — pushing to all followers now');
+    label.textContent='post pushed into each follower\'s precomputed feed';
+    animateAlong(g,62,110,220,110,'#5EEAD4',400, ()=>{
+      targets.forEach((t,i)=>setTimeout(()=>animateAlong(g,360,110,t[0],t[1],'#5EEAD4',400),i*150));
+      setStatus('feed-status','done — reads for these followers are now a single lookup');
+    });
+  } else {
+    setStatus('feed-status','celebrity post — fan-out on write would mean 10M writes');
+    label.textContent='post stored once; merged into followers\' feeds at read time';
+    animateAlong(g,62,110,220,110,'#FFB020',400, ()=>{
+      animateAlong(g,360,110,500,110,'#FFB020',450, ()=>{
+        setStatus('feed-status','post pulled in only when a follower actually reads their feed');
+      });
+    });
+  }
+}
+function feedReset(){
+  document.getElementById('feed-packets').innerHTML='';
+  document.getElementById('feed-label').textContent='';
+  setStatus('feed-status','idle');
+}
+
+/* ---------- Chat mock ---------- */
+function chatRun(mode){
+  const g=document.getElementById('chat-packets');
+  const label=document.getElementById('chat-label');
+  const dot=document.getElementById('chat-recipient-dot');
+  if(mode==='online'){
+    dot.setAttribute('fill','#5EEAD4');
+    setStatus('chat-status','recipient online — delivering live over WebSocket');
+    animateAlong(g,57,110,190,110,'#5EEAD4',400, ()=>{
+      label.textContent='persisted to message store, then pushed live';
+      animateAlong(g,330,120,420,175,'#5EEAD4',350);
+      animateAlong(g,330,108,690,108,'#5EEAD4',450, ()=>{
+        setStatus('chat-status','delivered instantly — read receipt will follow the same path');
+      });
+    });
+  } else {
+    dot.setAttribute('fill','#8FA5C0');
+    setStatus('chat-status','recipient offline — message queued');
+    animateAlong(g,57,110,190,110,'#FFB020',400, ()=>{
+      label.textContent='stored durably, presence shows offline — held for delivery';
+      animateAlong(g,330,120,420,175,'#FFB020',400, ()=>{
+        setStatus('chat-status','will push on reconnect — presence service notifies gateway');
+      });
+    });
+  }
+}
+function chatReset(){
+  document.getElementById('chat-packets').innerHTML='';
+  document.getElementById('chat-label').textContent='';
+  document.getElementById('chat-recipient-dot').setAttribute('fill','#5EEAD4');
+  setStatus('chat-status','idle');
+}
+
+/* ---------- KV store mock ---------- */
+function kvRun(mode){
+  const g=document.getElementById('kv-packets');
+  const label=document.getElementById('kv-label');
+  const nodes=[['kv-n1',505,38],['kv-n2',505,110],['kv-n3',505,183]];
+  if(mode==='write'){
+    setStatus('kv-status','writing to all 3 replicas, waiting for W=2 acks');
+    animateAlong(g,57,110,190,110,'#5EEAD4',400, ()=>{
+      nodes.forEach((n,i)=>setTimeout(()=>animateAlong(g,320,110,n[1],n[2],'#5EEAD4',400),i*120));
+      setTimeout(()=>{ label.textContent='2 of 3 acks received — write succeeds (W=2)'; setStatus('kv-status','write acknowledged to client'); }, 900);
+    });
+  } else {
+    setStatus('kv-status','reading from replicas, waiting for R=2 responses');
+    label.textContent='comparing versions from 2 replicas — most recent wins';
+    nodes.slice(0,2).forEach((n,i)=>setTimeout(()=>animateAlong(g,n[1],n[2],320,110,'#FFB020',400),i*150));
+    setTimeout(()=>setStatus('kv-status','W+R > N guarantees this read sees the last write'), 700);
+  }
+}
+function kvReset(){
+  document.getElementById('kv-packets').innerHTML='';
+  document.getElementById('kv-label').textContent='';
+  setStatus('kv-status','idle');
+}
+
+/* ---------- Ledger mock ---------- */
+function ledgerRun(mode){
+  const g=document.getElementById('ledger-packets');
+  const label=document.getElementById('ledger-label');
+  if(mode==='success'){
+    setStatus('ledger-status','new idempotency key — processing transfer');
+    animateAlong(g,57,110,190,110,'#5EEAD4',400, ()=>{
+      label.textContent='writing two entries: debit A ₹500, credit B ₹500';
+      animateAlong(g,330,95,470,42,'#5EEAD4',450, ()=>{
+        animateAlong(g,330,120,470,175,'#5EEAD4',400, ()=>{
+          setStatus('ledger-status','both entries committed — balances derived from ledger');
+        });
+      });
+    });
+  } else {
+    setStatus('ledger-status','retry with same idempotency key — checking before writing');
+    animateAlong(g,57,110,190,110,'#FFB020',400, ()=>{
+      label.textContent='key already processed — return original result, no new entries';
+      setStatus('ledger-status','no duplicate transfer — ledger stays balanced');
+    });
+  }
+}
+function ledgerReset(){
+  document.getElementById('ledger-packets').innerHTML='';
+  document.getElementById('ledger-label').textContent='';
+  setStatus('ledger-status','idle');
+}
 </script>
 </body>
 </html>
