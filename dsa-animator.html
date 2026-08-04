@@ -2243,8 +2243,15 @@ function draw() {
   
   // Highlight Code
   document.querySelectorAll(".ln").forEach(el => el.classList.remove("active"));
-  if (fr.line) {
-      const activeLine = document.getElementById("ln-" + fr.line);
+  let activeLineNum = null;
+  for (let i = fidx; i >= 0; i--) {
+      if (frames[i].line) {
+          activeLineNum = frames[i].line;
+          break;
+      }
+  }
+  if (activeLineNum) {
+      const activeLine = document.getElementById("ln-" + activeLineNum);
       if (activeLine) {
           activeLine.classList.add("active");
           // Optional: Scroll code block to active line
